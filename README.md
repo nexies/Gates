@@ -1,2 +1,3 @@
 # Gates
-An attempt to recreate Fences
+An attempt to recreate Fences 
+Using Qt
