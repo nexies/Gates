@@ -12,15 +12,13 @@ DESTDIR = lib
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    src/dragabble_widget.cpp \
-    src/gatesframe.cpp \
-    src/main.cpp \
-    src/mainwindow.cpp
+    src/_basic_frame.cpp \
+    src/frameshandler.cpp \
+    src/main.cpp
 
 HEADERS += \
-    src/dragabble_widget.h \
-    src/gatesframe.h \
-    src/mainwindow.h
+    src/_basic_frame.h \
+    src/frameshandler.h
 
 CONFIG += lrelease
 CONFIG += embed_translations

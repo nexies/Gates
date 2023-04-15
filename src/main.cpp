@@ -1,11 +1,9 @@
 #include <iostream>
 
-
 #include <QApplication>
 
-
-#include "mainwindow.h"
-#include "dragabble_widget.h"
+#include "_basic_frame.h"
+#include "frameshandler.h"
 
 
 
@@ -13,10 +11,12 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    MainWindow w;
-    DragabbleWidget wid;
+    FramesHandler handler;
+    handler.makeNewFrame();
+    handler.makeNewFrame();
+    handler.makeNewFrame();
+    handler.showAllFrames();
+//    frame.animate();
 
-//    w.show();
-    wid.show();
     return a.exec();
 }
