@@ -13,11 +13,13 @@ DESTDIR = lib
 
 SOURCES += \
     src/_basic_frame.cpp \
+    src/_icon.cpp \
     src/frameshandler.cpp \
     src/main.cpp
 
 HEADERS += \
     src/_basic_frame.h \
+    src/_icon.h \
     src/frameshandler.h
 
 CONFIG += lrelease

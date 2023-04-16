@@ -7,7 +7,10 @@
 #include <QList>
 #include <QPalette>
 #include <QPropertyAnimation>
+#include <QLayout>
 
+
+#include "_icon.h"
 
 class BasicFrame : public QWidget
 {
@@ -33,6 +36,8 @@ public:
     double Opacity;
     QColor Color;
     QPalette Palette = QPalette();
+    QGridLayout * Layout;
+    bool minimised = false;
 
 
 // methods
@@ -45,7 +50,15 @@ public:
 
 
 public: // for test
-    void animate();
+    void animateOpen();
+    void animateClose();
+    void animateCycle();
+    void add_icon();
+
+//    void keyPressEvent(QKeyEvent *event);
+
+    void mousePressEvent(QMouseEvent * event);
+    //    void mouseDoubleClickEvent(QMouseEvent *event);
 
 public slots:
 //    void slot_CloseGatesFrame();
