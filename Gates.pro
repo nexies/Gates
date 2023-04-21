@@ -14,13 +14,17 @@ DESTDIR = lib
 SOURCES += \
     src/_basic_frame.cpp \
     src/_icon.cpp \
+    utilities/contexmenu.cpp \
     src/frameshandler.cpp \
-    src/main.cpp
+    src/main.cpp \
+    utilities/icon.cpp
 
 HEADERS += \
     src/_basic_frame.h \
     src/_icon.h \
-    src/frameshandler.h
+    utilities/contexmenu.h \
+    src/frameshandler.h \
+    utilities/icon.h
 
 CONFIG += lrelease
 CONFIG += embed_translations
