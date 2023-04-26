@@ -4,7 +4,9 @@
 #include <QObject>
 #include <QList>
 
-#include "_basic_frame.h"
+#include "abstractframe.h"
+
+namespace Gates{
 
 class FramesHandler : public QObject
 {
@@ -21,7 +23,7 @@ public:
 
 // fields
 public:
-    QList<BasicFrame *> AllFrames;
+    QList<AbstractFrame *> AllFrames;
 
 // methods
 public:
@@ -30,4 +32,5 @@ public:
 
 };
 
+}
 #endif // FRAMESHANDLER_H

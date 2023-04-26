@@ -1,7 +1,9 @@
-#ifndef CONTEXMENU_H
-#define CONTEXMENU_H
+#ifndef CONTEXTMENU_H
+#define CONTEXTMENU_H
 
 #include <QWidget>
+#include <QMenu>
+#include <QContextMenuEvent>
 #include "icon.h"
 
 
@@ -15,15 +17,20 @@
 
 */
 
-class ContexMenu : public QWidget
+namespace Gates{
+
+class ContextMenu : public QMenu
 {
 
     Q_OBJECT
 
 
 public:
-    ContexMenu() : QWidget(nullptr) {};
+    ContextMenu() : QMenu(nullptr) {};
+    ContextMenu(IconItem * parent) : QMenu(parent){};
 
 };
 
-#endif // CONTEXMENU_H
+}
+
+#endif // CONTEXTMENU_H

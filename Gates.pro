@@ -12,22 +12,26 @@ DESTDIR = lib
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    src/_basic_frame.cpp \
-    src/_icon.cpp \
-    utilities/contexmenu.cpp \
+    src/abstractframe.cpp \
+    src/contextmenu.cpp \
     src/frameshandler.cpp \
+    src/gatesframe.cpp \
+    src/icon.cpp \
     src/main.cpp \
-    utilities/icon.cpp
+    utilities/shellqt.cpp
 
 HEADERS += \
-    src/_basic_frame.h \
-    src/_icon.h \
-    utilities/contexmenu.h \
+    src/abstractframe.h \
+    src/contextmenu.h \
     src/frameshandler.h \
-    utilities/icon.h
+    src/gatesframe.h \
+    src/icon.h \
+    utilities/shellqt.h
 
 CONFIG += lrelease
 CONFIG += embed_translations
+
+INCLUDEPATH += utilities
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
