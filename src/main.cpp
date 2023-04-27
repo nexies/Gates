@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     QTextStream qout(stdout);
 
 
-    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
+    Gates::IconItem icon("D:\\Games\\Noita\\noita.exe");
     icon.show();
 
 //    BasicFrame test;

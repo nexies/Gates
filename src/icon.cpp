@@ -54,9 +54,11 @@ QString IconItem::fileFullPath()
 
 void IconItem::getFileIcon()
 {
-    QFileInfo info(file.fileName());
-    QFileIconProvider ip;
-    this->icon=ip.icon(info);
+//    QFileInfo info(file.fileName());
+//    QFileIconProvider ip;
+//    this->icon=ip.icon(info);
+//    QList<QSize> sizes = icon.availableSizes();
+    this->icon = ExtractIcons(this->file.fileName());
 }
 
 void IconItem::execute()
@@ -74,9 +76,10 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
     QPainter painter(this);
     QRect mainRect = this->rect().adjusted(0, 0, -1, -1);
     QRect pixmapRect = mainRect.adjusted(-6, -6, -6, -6).translated(3, 3);
-    QRect textRect;
+//    QRect textRect;
+//    QSize size = this->icon.actualSize(pixmapRect.size());
 
-    QPixmap pixmap = this->icon.pixmap(150, 150);
+    QPixmap pixmap = this->icon.pixmap(QSize(32,32)).scaledToHeight(128, Qt::SmoothTransformation);
 
     QStyleOptionButton option;
 //    option.initFrom(this);
@@ -85,10 +88,10 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
     QRect rect = this->rect().adjusted(0, 0, -1, -1);
     painter.setPen(Qt::blue);
     painter.setOpacity(0.3);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect, Qt::blue);
     painter.setOpacity(1);
-    painter.drawPixmap(mainRect, pixmap, mainRect);
+    painter.drawPixmap(pixmapRect, pixmap, QRect(QPoint(0, 0), pixmap.size()));
 
 //    style()->drawControl(QStyle::CE_CheckBox, &option, &painter,
 //                         this);
@@ -125,21 +128,3 @@ void IconItem::mouseMoveEvent(QMouseEvent *event)
 
 
 
-
-#include <Shlobj.h>
-
-void LaunchWithShell(IconItem * icon)
-{
-
-//    QString explorer = "explorer.exe ";
-//    QStringList arguments;
-//    arguments << icon->file.fileName();
-
-
-//    cout << icon->file.fileName().toStdString() << endl;
-
-//    QProcess * process = new QProcess;
-//    process->start(explorer, arguments);
-    ShellExecuteW(NULL, L"open", icon->file.fileName().toStdWString().c_str(), NULL,NULL, SW_RESTORE);
-
-}
