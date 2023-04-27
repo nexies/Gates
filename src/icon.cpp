@@ -7,22 +7,30 @@ using namespace std;
 using namespace Gates;
 
 
-IconItem::IconItem(QWidget * parent) : QPushButton(parent)
+IconItem::IconItem(QWidget * parent) : QWidget(parent/*Qt::FramelessWindowHint*/)
 {
-    this->setGeometry(800, 800, 100, 70);
-    this->setIcon(QIcon("app.ico"));
-    this->setIconSize(QSize(50, 50));
+//    this->setGeometry(800, 800, 100, 70);
+//    this->setIcon(QIcon("app.ico"));
+//    this->setIconSize(QSize(50, 50));
     this->setWindowOpacity(1);
-    this->setFixedSize(50, 50);
+    this->setFixedSize(80, 80);
+    this->paintEngine();
+//    this->setWindowOpacity(0.1);
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+
+//    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_TranslucentBackground);
+//    setAttribute(Qt::WA_PaintOnScreen);
 }
 
-IconItem::IconItem(QString p_filePath, QWidget * parent) : QPushButton(parent)
+IconItem::IconItem(QString p_filePath, QWidget * parent) : IconItem(parent)
 {
     this->file.setFileName(p_filePath);
     this->getFileIcon();
-    this->setGeometry(800, 800, 100, 70);
-    this->setIcon(this->icon);
-    this->setIconSize((QSize(50, 50)));
+//    this->setGeometry(800, 800, 100, 70);
+//    this->setIcon(this->icon);
+//    this->setIconSize((QSize(50, 50)));
+//    this->setText(fileName());
 }
 
 bool IconItem::isValid()
@@ -54,6 +62,36 @@ void IconItem::getFileIcon()
 void IconItem::execute()
 {
     Execute(this->file.fileName());
+}
+
+
+#include <QStyleOptionButton>
+#include <QPainter>
+#include <QPainterPath>
+
+void IconItem::paintEvent(QPaintEvent * /* event */)
+{
+    QPainter painter(this);
+    QRect mainRect = this->rect().adjusted(0, 0, -1, -1);
+    QRect pixmapRect = mainRect.adjusted(-6, -6, -6, -6).translated(3, 3);
+    QRect textRect;
+
+    QPixmap pixmap = this->icon.pixmap(150, 150);
+
+    QStyleOptionButton option;
+//    option.initFrom(this);
+//    option.icon = this->icon;
+
+    QRect rect = this->rect().adjusted(0, 0, -1, -1);
+    painter.setPen(Qt::blue);
+    painter.setOpacity(0.3);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.fillRect(rect, Qt::blue);
+    painter.setOpacity(1);
+    painter.drawPixmap(mainRect, pixmap, mainRect);
+
+//    style()->drawControl(QStyle::CE_CheckBox, &option, &painter,
+//                         this);
 }
 
 void IconItem::mousePressEvent(QMouseEvent *event)

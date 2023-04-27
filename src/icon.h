@@ -14,7 +14,10 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QProcess>
+#include <QStyle>
 #include <QMouseEvent>
+#include <QAbstractButton>
+
 
 
 #include <cstdlib>
@@ -24,7 +27,10 @@ namespace Gates{
 
 class AbstractFrame;
 
-class IconItem: public QPushButton
+
+
+
+class IconItem: public QWidget
 {
 
     Q_OBJECT
@@ -64,7 +70,10 @@ private:
     void getFileIcon();
     void execute();
     void contextMenu() {std::cout << "Context menu will be launched" << std::endl; }
+
+    void customStyle();
 public:
+    void paintEvent(QPaintEvent * /* event */);
 
     void mousePressEvent(QMouseEvent * event);
     void mouseMoveEvent(QMouseEvent * event);

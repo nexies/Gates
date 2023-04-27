@@ -8,66 +8,97 @@
 #include "frameshandler.h"
 #include "gatesframe.h"
 #include "icon.h"
-
-#include <Shlobj.h>
-
-//HRESULT GetSHContextMenu(LPSHELLFOLDER psfFolder, LPCITEMIDLIST localPidl,
-//                         void** ppCM, int* pcmType)
-//{
-//   *ppCM = NULL;
-//   LPCONTEXTMENU pICv1 = NULL; // plain version
-//   // try to obtain the lowest possible IContextMenu
-//   HRESULT hr = psfFolder->GetUIObjectOf(NULL, 1, &localPidl,
-//                   IID_IContextMenu, NULL, (void**)&pICv1);
-//   if(pICv1) { // try to obtain a higher level pointer, first 3 then 2
-//      hr = pICv1->QueryInterface(IID_IContextMenu3, ppCM);
-//      if(NOERROR == hr) *pcmType = 3;
-//      else {
-//         hr = pICv1->QueryInterface(IID_IContextMenu2, ppCM);
-//         if(NOERROR == hr) *pcmType = 2;
-//      }
-
-//      if(*ppCM) pICv1->Release(); // free initial "v1.0" interface
-//      else { // no higher version supported
-//         *pcmType = 1;
-//         *ppCM = pICv1;
-//         hr = NOERROR; // never mind the query failures, this'll do
-//      }
-//   }
-
-//   return hr;
-//}
-
-//void test(){
-//#define MIN_SHELL_ID 1
-//#define MAX_SHELL_ID 30000
-//CMenu menu;
-//menu.CreatePopupMenu();
-//int cmType; // we don't need this here
-//LPCONTEXTMENU pCM;
-//LPCITEMIDLIST pidl;
-//LPSHELLFOLDER psfFolder;
-//// assume that psfFolder and pidl are valid
-//HRESULT hr = GetSHContextMenu(psfFolder, pidl, (void**)&pCM, &cmType);
-//// fill the menu with the standard shell items
-//hr = pCM->QueryContextMenu(menu, 0, MIN_SHELL_ID, MAX_SHELL_ID, CMF_EXPLORE);
-//// show the menu and retrieve the selected command ID
-//int cmdID = menu.TrackPopupMenu(TPM_RETURNCMD | TPM_LEFTALIGN, cx, cy, this);
-//}
-
-
-
+#include <QStyle>
 
 #include <QProcess>
 #include "contextmenu.h"
+#include <QStyleOptionViewItem>
+#include <QPainter>
+#include <QPaintEngine>
 
 using namespace std;
 //using namespace Gates;
+
+
+class TestButton: public QWidget
+{
+
+public:
+    TestButton(QWidget * parent = nullptr): QWidget(parent, Qt::Window)
+    {
+        this->setMouseTracking(true);
+        this->setWindowOpacity(0.7);
+    }
+
+    void testPaint()
+    {
+        QPainter paint(this);
+        paint.setPen(Qt::blue);
+        paint.drawText(rect(), Qt::AlignCenter, "The Text");
+    }
+
+    void paint(QPainter *painter,
+                                const QStyleOptionViewItem &option,
+                                 const QModelIndex &index) const
+    {
+        QIcon icon = qvariant_cast<QIcon>(index.data(Qt::DecorationRole));
+        QSize iconsize = icon.actualSize(option.decorationSize);
+        QRect item = option.rect;
+        QRect iconRect(item.left()+(item.width()/2)-(iconsize.width()/2),
+                       item.top()+4+4, iconsize.width(), iconsize.height());
+        QRect txtRect(item.left()+4, item.top()+iconsize.height()+4+4+4,
+                      item.width()-8, item.height()-iconsize.height()-4);
+        QBrush txtBrush = qvariant_cast<QBrush>(index.data(Qt::ForegroundRole));
+        bool isSelected = option.state & QStyle::State_Selected;
+        bool isEditing = false;//_isEditing && index==_index;
+
+        /*QStyleOptionViewItem opt = option;
+            initStyleOption(&opt,index);
+            opt.decorationAlignment |= Qt::AlignCenter;
+            opt.displayAlignment    |= Qt::AlignCenter;
+            opt.decorationPosition   = QStyleOptionViewItem::Top;
+            opt.features |= QStyleOptionViewItem::WrapText;
+            const QWidget *widget = opt.widget;
+            QStyle *style = widget ? widget->style() : QApplication::style();
+            style->drawControl(QStyle::CE_ItemViewItem,&opt,painter);*/
+
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setRenderHint(QPainter::HighQualityAntialiasing);
+
+        if (isSelected && !isEditing) {
+            QPainterPath path;
+            QRect frame(item.left(),item.top()+4, item.width(), item.height()-4);
+            path.addRoundRect(frame, 15, 15);
+            //  path.addRect(frame);
+            painter->setOpacity(0.7);
+            painter->fillPath(path, option.palette.highlight());
+            painter->setOpacity(1.0);
+        }
+
+        painter->drawPixmap(iconRect, icon.pixmap(iconsize.width(),iconsize.height()));
+
+        if (isEditing) { return; }
+        if (isSelected) { painter->setPen(option.palette.highlightedText().color()); }
+        else { painter->setPen(txtBrush.color()); }
+
+        painter->drawText(txtRect,
+                          Qt::AlignTop|Qt::AlignHCenter|Qt::TextWordWrap|Qt::TextWrapAnywhere,
+                          index.data().toString());
+    }
+
+public:
+
+};
+
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QTextStream qout(stdout);
+
+
+    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
+    icon.show();
 
 //    BasicFrame test;
 
@@ -97,8 +128,9 @@ int main(int argc, char *argv[])
 //    pr.setProgram("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
 //    pr.start();
 
-    Gates::Frame frame("C:\\Users\\Public\\Desktop", "DeskTop");
-    frame.show();
+//    Gates::Frame frame("C:\\Users\\Public\\Desktop", "DeskTop");
+//    frame.show();
+
 
 
     return a.exec();
