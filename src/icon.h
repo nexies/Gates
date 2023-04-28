@@ -63,11 +63,11 @@ public:
 public:
     bool isValid();
     QString fileName();
-    QString fileFullPath();
+    QString fullFilePath();
     QString fileExtention();
 
 private:
-    void getFileIcon();
+    void getIcon();
     void execute();
     void contextMenu() {std::cout << "Context menu will be launched" << std::endl; }
 

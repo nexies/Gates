@@ -96,45 +96,10 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QTextStream qout(stdout);
 
-
-    Gates::IconItem icon("D:\\Games\\Noita\\noita.exe");
+    Gates::IconItem icon("C:\\Program Files\\TeamViewer\\TeamViewer.exe");
     icon.show();
 
-//    BasicFrame test;
-
-//    test.add_icon("C:\\Users\\Nexie\\Desktop\\Discord.lnk");
-//    test.add_icon("C:\\Users\\Nexie\\Desktop\\libs");
-//    test.add_icon("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
-//    test.show();
-
-//    QDir dir("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
-//    QStringList filenames = dir.entryList();
-
-//    for(int i = 0; i < filenames.size(); i++)
-//        qout << filenames[i] << endl;
-
-//    Gates::AbstractFrame frame(QString("C:\\Users\\Public\\Desktop\\"));
-//    frame.show();
-
-//    IconItem ic(QString("C:\\Users\\Nexie\\Desktop\\"));
-
-//    LaunchWithShell(&ic);
-
-//    IconItem t("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
-//    qout << t.fileFullPath();
-
-
-//    QProcess pr;
-//    pr.setProgram("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
-//    pr.start();
-
-//    Gates::Frame frame("C:\\Users\\Public\\Desktop", "DeskTop");
-//    frame.show();
-
-
-
     return a.exec();
-//    return 0;
 }
 
 

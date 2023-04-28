@@ -7,30 +7,21 @@ using namespace std;
 using namespace Gates;
 
 
-IconItem::IconItem(QWidget * parent) : QWidget(parent/*Qt::FramelessWindowHint*/)
+IconItem::IconItem(QWidget * parent) : QWidget(parent)
 {
-//    this->setGeometry(800, 800, 100, 70);
-//    this->setIcon(QIcon("app.ico"));
-//    this->setIconSize(QSize(50, 50));
-    this->setWindowOpacity(1);
     this->setFixedSize(80, 80);
-    this->paintEngine();
-//    this->setWindowOpacity(0.1);
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
 
 //    setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
-//    setAttribute(Qt::WA_PaintOnScreen);
+    setAttribute(Qt::WA_PaintOnScreen);
+
 }
 
 IconItem::IconItem(QString p_filePath, QWidget * parent) : IconItem(parent)
 {
     this->file.setFileName(p_filePath);
-    this->getFileIcon();
-//    this->setGeometry(800, 800, 100, 70);
-//    this->setIcon(this->icon);
-//    this->setIconSize((QSize(50, 50)));
-//    this->setText(fileName());
+    this->getIcon();
 }
 
 bool IconItem::isValid()
@@ -43,22 +34,19 @@ bool IconItem::isValid()
 QString IconItem::fileName()
 {
     QString name = this->file.fileName();
-    int i = name.lastIndexOf("/");
-    return name.mid(i+1);
+    int lastSeparator = name.lastIndexOf("/");
+    int len = name.lastIndexOf(".") - lastSeparator;
+    return name.mid(lastSeparator + 1, len);
 }
 
-QString IconItem::fileFullPath()
+QString IconItem::fullFilePath()
 {
     return this->file.fileName();
 }
 
-void IconItem::getFileIcon()
+void IconItem::getIcon()
 {
-//    QFileInfo info(file.fileName());
-//    QFileIconProvider ip;
-//    this->icon=ip.icon(info);
-//    QList<QSize> sizes = icon.availableSizes();
-    this->icon = ExtractIcons(this->file.fileName());
+    this->icon = extractIcons(this->fullFilePath());
 }
 
 void IconItem::execute()
@@ -79,11 +67,9 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
 //    QRect textRect;
 //    QSize size = this->icon.actualSize(pixmapRect.size());
 
-    QPixmap pixmap = this->icon.pixmap(QSize(32,32)).scaledToHeight(128, Qt::SmoothTransformation);
+    QPixmap pixmap = this->icon.pixmap(QSize(16, 16));//.scaledToHeight(128, Qt::SmoothTransformation);
 
     QStyleOptionButton option;
-//    option.initFrom(this);
-//    option.icon = this->icon;
 
     QRect rect = this->rect().adjusted(0, 0, -1, -1);
     painter.setPen(Qt::blue);
@@ -91,10 +77,7 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect, Qt::blue);
     painter.setOpacity(1);
-    painter.drawPixmap(pixmapRect, pixmap, QRect(QPoint(0, 0), pixmap.size()));
-
-//    style()->drawControl(QStyle::CE_CheckBox, &option, &painter,
-//                         this);
+    painter.drawPixmap(mainRect, pixmap, QRect(QPoint(0, 0), pixmap.size()));
 }
 
 void IconItem::mousePressEvent(QMouseEvent *event)

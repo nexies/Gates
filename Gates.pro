@@ -19,6 +19,7 @@ SOURCES += \
     src/gatesframe.cpp \
     src/icon.cpp \
     src/main.cpp \
+    utilities/QtIconProviderExample.cpp \
     utilities/shellqt.cpp
 
 HEADERS += \
