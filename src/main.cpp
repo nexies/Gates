@@ -90,13 +90,15 @@ public:
 
 };
 
+//"C:\\Users\\Public\\Desktop\\TeamViewer.lnk"
+//"C:\\Program Files\\TeamViewer\\TeamViewer.exe"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QTextStream qout(stdout);
 
-    Gates::IconItem icon("C:\\Program Files\\TeamViewer\\TeamViewer.exe");
+    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
     icon.show();
 
     return a.exec();

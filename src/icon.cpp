@@ -9,7 +9,7 @@ using namespace Gates;
 
 IconItem::IconItem(QWidget * parent) : QWidget(parent)
 {
-    this->setFixedSize(80, 80);
+    this->setFixedSize(95, 85);
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
 
 //    setAttribute(Qt::WA_NoSystemBackground);
@@ -63,11 +63,12 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
 {
     QPainter painter(this);
     QRect mainRect = this->rect().adjusted(0, 0, -1, -1);
-    QRect pixmapRect = mainRect.adjusted(-6, -6, -6, -6).translated(3, 3);
+    QRect pixmapRect = mainRect.adjusted(0, 0, -18, -18).translated(9, 3);
 //    QRect textRect;
 //    QSize size = this->icon.actualSize(pixmapRect.size());
 
-    QPixmap pixmap = this->icon.pixmap(QSize(16, 16));//.scaledToHeight(128, Qt::SmoothTransformation);
+    QPixmap pixmap = this->icon.pixmap(QSize(90, 90)).scaledToHeight(128, Qt::SmoothTransformation);
+    QRect pixmapSource =  QRect(QPoint(0, 0), pixmap.size());
 
     QStyleOptionButton option;
 
@@ -77,7 +78,10 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect, Qt::blue);
     painter.setOpacity(1);
-    painter.drawPixmap(mainRect, pixmap, QRect(QPoint(0, 0), pixmap.size()));
+    this->icon.paint(&painter, pixmapRect);
+//    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+//    painter.setOpacity(1);
+//    painter.drawPixmap(pixmapRect, pixmap, pixmapSource);
 }
 
 void IconItem::mousePressEvent(QMouseEvent *event)
