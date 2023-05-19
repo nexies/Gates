@@ -15,7 +15,6 @@ IconItem::IconItem(QWidget * parent) : QWidget(parent)
 //    setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_PaintOnScreen);
-
 }
 
 IconItem::IconItem(QString p_filePath, QWidget * parent) : IconItem(parent)
@@ -36,7 +35,7 @@ QString IconItem::fileName()
     QString name = this->file.fileName();
     int lastSeparator = name.lastIndexOf("/");
     int len = name.lastIndexOf(".") - lastSeparator;
-    return name.mid(lastSeparator + 1, len);
+    return name.mid(lastSeparator + 1, len-1);
 }
 
 QString IconItem::fullFilePath()
@@ -61,48 +60,82 @@ void IconItem::execute()
 
 void IconItem::paintEvent(QPaintEvent * /* event */)
 {
-    QPainter painter(this);
+    QPainter painter(this);// = new QPainter(this);
+
     QRect mainRect = this->rect().adjusted(0, 0, -1, -1);
-    QRect pixmapRect = mainRect.adjusted(0, 0, -18, -18).translated(9, 3);
-//    QRect textRect;
-//    QSize size = this->icon.actualSize(pixmapRect.size());
+//    QSize mainSize = mainRect.size();
+    QSize iconSize = this->icon.actualSize(this->size() / 10 * 7);
 
-    QPixmap pixmap = this->icon.pixmap(QSize(90, 90)).scaledToHeight(128, Qt::SmoothTransformation);
-    QRect pixmapSource =  QRect(QPoint(0, 0), pixmap.size());
+    QRect iconRect(mainRect.left()+(mainRect.width()/2)-(iconSize.width()/2),
+                   mainRect.top()+4, iconSize.width(), iconSize.height());
+    QRect textRect(mainRect.left()+4, mainRect.top()+iconSize.height()+4,
+                  mainRect.width()-8, mainRect.height()-iconSize.height()-4);
+//    QBrush txtBrush;
 
-    QStyleOptionButton option;
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
-    QRect rect = this->rect().adjusted(0, 0, -1, -1);
-    painter.setPen(Qt::blue);
-    painter.setOpacity(0.3);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.fillRect(rect, Qt::blue);
-    painter.setOpacity(1);
-    this->icon.paint(&painter, pixmapRect);
-//    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-//    painter.setOpacity(1);
-//    painter.drawPixmap(pixmapRect, pixmap, pixmapSource);
+    QColor highlightColor;
+
+    QBrush highlightBrush(Qt::white);
+    painter.setPen(highlightColor);
+    QPainterPath path;
+    path.addRoundRect(mainRect, 15,15);
+
+
+    if(state == Idle)
+        painter.setOpacity(0);
+    else if(state == Highlighted)
+        painter.setOpacity(0.2);
+    else if(state == Selected)
+        painter.setOpacity(0.4);
+
+    painter.fillPath(path, highlightBrush);
+
+
+
+    painter.setOpacity(1.0);
+    this->icon.paint(&painter, iconRect);
+
+    painter.setPen(Qt::black);
+    painter.drawText(textRect.adjusted(0, 1, 1, 0),
+                      Qt::AlignTop|Qt::AlignHCenter|Qt::TextWordWrap,
+                      this->fileName());
+    painter.setPen(Qt::white);
+    painter.drawText(textRect,
+                      Qt::AlignTop|Qt::AlignHCenter|Qt::TextWordWrap,
+                     this->fileName());
+    this->setMask(this->rect());
 }
 
 void IconItem::mousePressEvent(QMouseEvent *event)
 {
-    if(event->button() == Qt::RightButton)
+    if(event->button() == Qt::RightButton){
         this->contextMenu();
-    else if(event->type() == QMouseEvent::Type::MouseButtonDblClick)
+        emit signal_rightClicked(this);
+    }
+    else if(event->type() == QMouseEvent::Type::MouseButtonDblClick){
+        this->state = Highlighted;
         this->execute();
+        emit signal_doubleClicked(this);
+    }
     else if(event->type() == QMouseEvent::Type::MouseButtonPress){
         this->state = State::Selected;
+        emit signal_clicked(this);
         this->dragStartPosition = event->pos();
     }
+    update();
 }
 
 void IconItem::mouseMoveEvent(QMouseEvent *event)
 {
     if(!(event->button() & Qt::LeftButton))
         return;
-    if((event->pos() - dragStartPosition).manhattanLength() <
-            QApplication::startDragDistance())
-        return;
+//    if((event->pos() - dragStartPosition).manhattanLength() <
+//            QApplication::startDragDistance())
+//        return;
+//    if(this)
+//    if(event->pos())
+
 
 //    QDrag *drag = new QDrag(this);
 //    QMimeData *mimeData = new QMimeData;
@@ -110,7 +143,19 @@ void IconItem::mouseMoveEvent(QMouseEvent *event)
 //    mimeData->setData(mimeType, data);
 //    drag->setMimeData(mimeData);
 
-//    Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+        //    Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+}
+
+void IconItem::enterEvent(QEvent *)
+{
+    if(this->state == Idle) this->state = Highlighted;
+    this->update();
+}
+
+void IconItem::leaveEvent(QEvent *)
+{
+    if(this->state == Highlighted) this->state = Idle;
+    this->update();
 }
 
 

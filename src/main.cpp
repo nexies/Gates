@@ -93,13 +93,21 @@ public:
 //"C:\\Users\\Public\\Desktop\\TeamViewer.lnk"
 //"C:\\Program Files\\TeamViewer\\TeamViewer.exe"
 
+
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    QTextStream qout(stdout);
 
-    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
-    icon.show();
+    QApplication a( argc, argv );
+
+//    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
+//    icon.show();
+
+//    Gates::Frame frame("C:\\Users\\Public\\Desktop", "new frame");
+//    frame.show();
+//    frame.animateCycle();
+    Gates::FramesHandler handler;
+
+    handler.collectAllDesktopFiles();
 
     return a.exec();
 }

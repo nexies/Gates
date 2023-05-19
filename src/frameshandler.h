@@ -29,6 +29,7 @@ public:
 public:
     void makeNewFrame();
     void showAllFrames();
+    void collectAllDesktopFiles();
 
 };
 

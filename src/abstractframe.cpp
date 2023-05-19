@@ -2,26 +2,37 @@
 
 #include <iostream>
 
-Gates::AbstractFrame::AbstractFrame(QWidget * parent): QWidget(parent,  Qt::FramelessWindowHint) {
+Gates::AbstractFrame::AbstractFrame(QWidget * parent): QWidget(parent) {
     this->animationPolicy = NotAnimated;
     this->iconPlacementPolicy = GridPlacement;
     this->sortingPolicy = NoSorting;
+
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint);
+
+//    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_AcceptDrops);
+    setAttribute(Qt::WA_MouseNoMask);
+    setAttribute(Qt::WA_PaintOnScreen);
 }
 
 Gates::AbstractFrame::AbstractFrame(QString p_filename,  QWidget * parent): AbstractFrame(parent)
 {
     this->layout = new QGridLayout;
     this->setLayout(this->layout);
+    this->layout->setHorizontalSpacing(1);
+    this->layout->setVerticalSpacing(1);
 
     this->directory.setPath(p_filename);
-    std::cout << directory.exists() << std::endl;
+    if(!directory.exists()) return;
+
     QStringList filesList = directory.entryList();
 
     int count = 0;
-    for(int i = 0; i < filesList.size(); i++){
+    for(int i = 2; i < filesList.size(); i++){
         IconItem * newIcon = new IconItem(directory.path() + "/" + filesList[i]);
         this->iconList.append(newIcon);
-        this->layout->addWidget(newIcon, count/10, count % 10);
+        this->layout->addWidget(newIcon, count/6, count % 6);
         count += 1;
     }
 

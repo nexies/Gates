@@ -12,6 +12,12 @@ Frame::Frame(QString p_filename, QString frameTitle, QWidget *p_parent) : Abstra
     this->frameTitle = frameTitle;
 }
 
+void Frame::setOpacity(double p_Opacity)
+{
+    this->opacity = p_Opacity;
+    this->setWindowOpacity(p_Opacity);
+}
+
 void Frame::disappear()
 {
     QGraphicsOpacityEffect * show_effect = new QGraphicsOpacityEffect(this);
@@ -63,22 +69,24 @@ void Frame::animateClose()
 
 void Frame::animateCycle()
 {
-    while(true){
-        this->animateOpen();
-//        QThread::sleep(2);
-//        this->animateClose();
-//        QThread::sleep(2);
-    }
+    QPropertyAnimation *animationo = new QPropertyAnimation(this, "geometry");
+    animationo->setDuration(200);
+    animationo->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
+    animationo->setStartValue(QRect(100, 0, 400, 30));
+    animationo->setEndValue(QRect(100, 0, 400, 300));
+
+    QPropertyAnimation *animationc = new QPropertyAnimation(this, "geometry");
+    animationc->setDuration(200);
+    animationc->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
+    animationc->setStartValue(QRect(100, 0, 400, 300));
+    animationc->setEndValue(QRect(100, 0, 400, 30));
+
+
 }
 
 void Frame::mousePressEvent(QMouseEvent *event)
 {
-    if(visible){
-        this->disappear();
-        std::cout << "hidden the window" << std::endl;
-    }/*
-    else
-        this->appear();*/
+    this->animateClose();
 }
 
 
