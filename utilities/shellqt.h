@@ -6,6 +6,8 @@
 #include <QIcon>
 #include <QPixmap>
 
+
+void EnableBlurBehind();
 void Execute(QString file, QStringList params = QStringList());
 QIcon extractIcons(QString sourceFile);
 

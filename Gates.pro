@@ -1,5 +1,6 @@
 QT       += core gui
 QT       += winextras
+#QT       += KWindowSystem
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,6 +16,7 @@ DESTDIR = lib
 SOURCES += \
     src/abstractframe.cpp \
     src/contextmenu.cpp \
+    src/desktopframe.cpp \
     src/frameshandler.cpp \
     src/gatesframe.cpp \
     src/icon.cpp \
@@ -25,6 +27,7 @@ SOURCES += \
 HEADERS += \
     src/abstractframe.h \
     src/contextmenu.h \
+    src/desktopframe.h \
     src/frameshandler.h \
     src/gatesframe.h \
     src/icon.h \

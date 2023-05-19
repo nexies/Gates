@@ -2,7 +2,14 @@
 #include <Shlobj.h>
 #include <iostream>
 
+#include <dwmapi.h>
+
 using namespace std;
+DWM_BLURBEHIND blurSettings = {DWM_BB_ENABLE, true, NULL, FALSE};
+
+void EnableBlurBehind() {
+//    HRESULT result = DwmEnableBlurBehindWindow(HWND(1), &blurSettings);
+}
 
 void Execute(QString file, QStringList params)
 {
@@ -77,3 +84,4 @@ QIcon extractIcons(QString sourceFile)
     }
     return result;
 }
+
