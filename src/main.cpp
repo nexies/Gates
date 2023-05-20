@@ -109,6 +109,8 @@ int main(int argc, char *argv[])
 
     handler.collectAllDesktopFiles();
 
+    // test comment to check if commit is working
+
     return a.exec();
 }
 
