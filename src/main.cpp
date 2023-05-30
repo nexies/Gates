@@ -105,9 +105,12 @@ int main(int argc, char *argv[])
 //    Gates::Frame frame("C:\\Users\\Public\\Desktop", "new frame");
 //    frame.show();
 //    frame.animateCycle();
-    Gates::FramesHandler handler;
+//    Gates::FramesHandler handler;
 
-    handler.collectAllDesktopFiles();
+//    handler.collectAllDesktopFiles();
+
+    Gates::IconItem discord("C:\\Users\\green\\Desktop\\Discord.lnk");
+    discord.show();
 
     // test comment to check if commit is working
 

@@ -82,18 +82,21 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
     path.addRoundRect(mainRect, 15,15);
 
 
-    if(state == Idle)
+    if(state & (Idle | Dragged))
         painter.setOpacity(0);
-    else if(state == Highlighted)
+    else if(state & Highlighted)
         painter.setOpacity(0.2);
-    else if(state == Selected)
+    else if(state & Selected)
         painter.setOpacity(0.4);
 
     painter.fillPath(path, highlightBrush);
 
 
+    if(state == Dragged)
+        painter.setOpacity(0.5);
+    else
+        painter.setOpacity(1.0);
 
-    painter.setOpacity(1.0);
     this->icon.paint(&painter, iconRect);
 
     painter.setPen(Qt::black);
@@ -122,6 +125,7 @@ void IconItem::mousePressEvent(QMouseEvent *event)
         this->state = State::Selected;
         emit signal_clicked(this);
         this->dragStartPosition = event->pos();
+        this->mouseMoveEvent(event);
     }
     update();
 }
@@ -130,6 +134,28 @@ void IconItem::mouseMoveEvent(QMouseEvent *event)
 {
     if(!(event->button() & Qt::LeftButton))
         return;
+
+    QDrag * drag = new QDrag(this);
+    QMimeData * mimeData = new QMimeData();
+
+    QPixmap pixmap(this->size());
+    this->state = Dragged;
+    this->update();
+    this->render(&pixmap, QPoint(), QRegion(this->rect()));
+
+
+
+    mimeData->setText(this->fullFilePath());
+    drag->setMimeData(mimeData);
+    drag->setPixmap(pixmap);
+
+    Qt::DropAction dropAction = drag->exec(Qt::MoveAction);
+
+    QPoint endSpot = QCursor::pos();
+    this->setGeometry(endSpot.x(), endSpot.y(), this->height(), this->width());
+
+    this->state = Idle;
+
 //    if((event->pos() - dragStartPosition).manhattanLength() <
 //            QApplication::startDragDistance())
 //        return;

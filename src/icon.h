@@ -15,6 +15,9 @@
 //#include <QMimeData>
 #include <QProcess>
 #include <QMouseEvent>
+#include <QDrag>
+#include <QMimeData>
+
 //#include <QStyle>
 //#include <QAbstractButton>
 //#include <QPainter>
@@ -35,12 +38,12 @@ class IconItem: public QWidget
 
     enum State
     {
-        Idle        = 0b00000,
-        Highlighted = 0b00001,
-        Selected    = 0b00010,
-        Dragged     = 0b00100,
-        Remamed     = 0b01000,
-        Unactive    = 0b10000
+        Idle        = 0b100000,
+        Highlighted = 0b000001,
+        Selected    = 0b000010,
+        Dragged     = 0b000100,
+        Remamed     = 0b001000,
+        Unactive    = 0b010000
     };
 
 public:
