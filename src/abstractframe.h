@@ -1,7 +1,6 @@
 #ifndef ABSTRACTFRAME_H
 #define ABSTRACTFRAME_H
 
-
 #include <QWidget>
 #include <QString>
 #include <QList>

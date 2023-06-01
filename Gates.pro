@@ -20,6 +20,7 @@ SOURCES += \
     src/frameshandler.cpp \
     src/gatesframe.cpp \
     src/icon.cpp \
+    src/iconview.cpp \
     src/main.cpp \
     utilities/QtIconProviderExample.cpp \
     utilities/shellqt.cpp
@@ -31,6 +32,7 @@ HEADERS += \
     src/frameshandler.h \
     src/gatesframe.h \
     src/icon.h \
+    src/iconview.h \
     utilities/shellqt.h
 
 CONFIG += lrelease

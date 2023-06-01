@@ -114,3 +114,41 @@ void Frame::mousePressEvent(QMouseEvent *event)
 //    }
 //}
 
+
+Gates::NameBar::NameBar(QString title, Frame *frame) : QWidget(nullptr)
+{
+    this->frame = frame;
+    this->title = title;
+
+    this->setWindowFlags(Qt::FramelessWindowHint);
+    this->setAttribute(Qt::WA_PaintOnScreen);
+    this->setAttribute(Qt::WA_TranslucentBackground);
+
+    this->setFixedHeight(60);
+    this->setFixedWidth(700);
+
+
+    QPushButton * hideButton = new QPushButton("Hide");
+    hideButton->setFixedSize(30, 30);
+    QObject::connect(hideButton, SIGNAL(pressed()), this, SLOT(hideButtonPressed()));
+
+    QPushButton * menuButton = new QPushButton("Menu");
+    menuButton->setFixedSize(30, 30);
+    QObject::connect(menuButton, SIGNAL(pressed()), this, SLOT(menuButtonPressed()));
+
+    QLabel      * titleLabel = new QLabel(title);
+    QPalette sample_palette;
+    sample_palette.setColor(QPalette::WindowText, Qt::white);
+    titleLabel->setPalette(sample_palette);
+    QSizePolicy titleSizePolicy;
+    titleSizePolicy.setHorizontalPolicy(QSizePolicy::Maximum);
+    titleLabel->setSizePolicy(titleSizePolicy);
+
+    QHBoxLayout * layout = new QHBoxLayout;
+
+    layout->addWidget(hideButton, 0, Qt::AlignLeft);
+    layout->addWidget(titleLabel);
+    layout->addWidget(menuButton, 0, Qt::AlignRight | Qt::AlignBaseline);
+
+    this->setLayout(layout);
+}

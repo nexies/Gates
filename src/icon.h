@@ -46,6 +46,13 @@ class IconItem: public QWidget
         Unactive    = 0b010000
     };
 
+    enum LayoutPolicy
+    {
+        Box,
+        Tile,
+        Row,
+    };
+
 public:
 
     IconItem(QWidget * parent = nullptr);
