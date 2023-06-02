@@ -4,9 +4,9 @@
 #include <QIODevice>
 #include <QTextStream>
 
-#include "abstractframe.h"
+#include "iconview.h"
 #include "frameshandler.h"
-#include "gatesframe.h"
+#include "frame.h"
 #include "icon.h"
 #include <QStyle>
 

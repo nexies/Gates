@@ -38,6 +38,13 @@ QString IconItem::fileName()
     return name.mid(lastSeparator + 1, len-1);
 }
 
+QString IconItem::fileNameWithExtention()
+{
+    QString name = this->file.fileName();
+    int lastSeparator = name.lastIndexOf("/");
+    return name.mid(lastSeparator + 1);
+}
+
 QString IconItem::fullFilePath()
 {
     return this->file.fileName();

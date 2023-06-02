@@ -14,11 +14,10 @@ DESTDIR = lib
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    src/abstractframe.cpp \
     src/contextmenu.cpp \
     src/desktopframe.cpp \
+    src/frame.cpp \
     src/frameshandler.cpp \
-    src/gatesframe.cpp \
     src/icon.cpp \
     src/iconview.cpp \
     src/main.cpp \
@@ -26,11 +25,10 @@ SOURCES += \
     utilities/shellqt.cpp
 
 HEADERS += \
-    src/abstractframe.h \
     src/contextmenu.h \
     src/desktopframe.h \
+    src/frame.h \
     src/frameshandler.h \
-    src/gatesframe.h \
     src/icon.h \
     src/iconview.h \
     utilities/shellqt.h

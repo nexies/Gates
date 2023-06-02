@@ -1,46 +1,52 @@
-#include "gatesframe.h"
+#include "frame.h"
 
 using namespace Gates;
 
-Frame::Frame(QString frameTitle, QWidget *p_parent) : AbstractFrame(p_parent)
+Frame::Frame(QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
 {
     this->frameTitle = frameTitle;
 }
 
-Frame::Frame(QString p_filename, QString frameTitle, QWidget *p_parent) : AbstractFrame(p_filename, p_parent)
+Frame::Frame(QString p_filename, QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
 {
+    this->iconView = new IconView(p_filename, p_parent);
     this->frameTitle = frameTitle;
 }
 
 void Frame::setOpacity(double p_Opacity)
 {
-    this->opacity = p_Opacity;
     this->setWindowOpacity(p_Opacity);
+    this->opacity = p_Opacity;
 }
 
-void Frame::disappear()
+void Frame::setPalette(QPalette p_Palette)
 {
-    QGraphicsOpacityEffect * show_effect = new QGraphicsOpacityEffect(this);
-    this->setGraphicsEffect(show_effect);
-    QPropertyAnimation * animation = new QPropertyAnimation(show_effect, "opacity");
-    animation->setDuration(200);
-    animation->setStartValue(1);
-    animation->setEndValue(0);
-
-    animation->start();
-//    this->setVisible(false);
+    this->palette = p_Palette;
 }
 
-void Frame::appear()
-{
-    QPropertyAnimation * animation = new QPropertyAnimation(this, "opacity");
-    animation->setDuration(200);
-    animation->setStartValue(0);
-    animation->setEndValue(this->opacity);
+//void Frame::disappear()
+//{
+//    QGraphicsOpacityEffect * show_effect = new QGraphicsOpacityEffect(this);
+//    this->setGraphicsEffect(show_effect);
+//    QPropertyAnimation * animation = new QPropertyAnimation(show_effect, "opacity");
+//    animation->setDuration(200);
+//    animation->setStartValue(1);
+//    animation->setEndValue(0);
 
-//    this->setVisible(true);
-    animation->start();
-}
+//    animation->start();
+////    this->setVisible(false);
+//}
+
+//void Frame::appear()
+//{
+//    QPropertyAnimation * animation = new QPropertyAnimation(this, "opacity");
+//    animation->setDuration(200);
+//    animation->setStartValue(0);
+//    animation->setEndValue(this->opacity);
+
+////    this->setVisible(true);
+//    animation->start();
+//}
 
 
 void Frame::animateOpen()

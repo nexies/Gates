@@ -1,9 +1,9 @@
 #ifndef DESKTOPFRAME_H
 #define DESKTOPFRAME_H
 
-#include "abstractframe.h"
+#include "iconview.h"
 #include "icon.h"
-#include "gatesframe.h"
+#include "frame.h"
 
 #include <QList>
 

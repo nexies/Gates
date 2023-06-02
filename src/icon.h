@@ -29,7 +29,7 @@
 
 namespace Gates{
 
-class AbstractFrame;
+class IconView;
 
 class IconItem: public QWidget
 {
@@ -64,15 +64,16 @@ public:
 
     QIcon icon;
     QFile file;
-    AbstractFrame * parentFrame;
+    IconView * parentFrame;
 
     State state = Idle;
     QPoint dragStartPosition;
 
 public:
-    bool isValid();
-    QString fileName();
-    QString fullFilePath();
+    bool isValid() const;
+    QString fileName() const;
+    QString fileNameWithExtention() const;
+    QString fullFilePath() const;
     QString fileExtention();
 
 private:
@@ -107,7 +108,6 @@ signals:
 };
 
 }
-
 
 
 #endif // ICON_H

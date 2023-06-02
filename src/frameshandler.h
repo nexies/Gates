@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QList>
 
-#include "abstractframe.h"
+#include "iconview.h"
 
 namespace Gates{
 
@@ -23,7 +23,7 @@ public:
 
 // fields
 public:
-    QList<AbstractFrame *> AllFrames;
+    QList<IconView *> AllFrames;
 
 // methods
 public:
