@@ -15,32 +15,7 @@ namespace Gates{
 class Frame;
 
 
-class NameBar: public QWidget
-{
 
-    Q_OBJECT
-
-public:
-    NameBar(QString title, Frame * frame = nullptr);
-
-protected:
-
-    void paintEvent(QPaintEvent * /*event*/){
-        QPainter painter(this);
-        painter.setOpacity(0.5);
-        QRect selfRect = this->rect().adjusted(0, 0, -1, -1);
-        painter.fillRect(selfRect, Qt::darkBlue);
-
-    }
-
-public:
-    QString title;
-    Gates::Frame * frame;
-
-public slots:
-    void menuButtonPressed() { std::cout << this->title.toStdString() << ":  Menu button pressed" << std::endl;};
-    void hideButtonPressed() { std::cout << this->title.toStdString() << ":  Hide button pressed" << std::endl;};
-};
 
 
 class Frame: public QWidget
@@ -48,16 +23,36 @@ class Frame: public QWidget
 
     Q_OBJECT
 
+    class NameBar: public QWidget
+    {
+
+    public:
+        NameBar(Frame * frame);
+
+    protected:
+
+        void paintEvent(QPaintEvent * /*event*/){
+//            QPainter painter(this);
+//            painter.setOpacity(0.5);
+//            QRect selfRect = this->rect().adjusted(0, 0, -1, -1);
+//            painter.fillRect(selfRect, Qt::red);
+        }
+
+    public:
+        Gates::Frame * frame;
+    };
 
 public:
-    Frame(QString frameTitle = "New Frame", QWidget * p_parent = nullptr);
-    Frame(QString p_filename, QString frameTitle = "NewFrame", QWidget * p_parent = nullptr);
+    Frame () {}
+    Frame(QString frameTitle, QWidget * p_parent = nullptr);
+    Frame(QString frameTitle, QString p_filename, QWidget * p_parent = nullptr);
     ~Frame() {}
 
 private:
-    QString frameTitle = "New Frame";
-    IconView * iconView;
-    NameBar * nameBar;
+
+    QString    _title = "New Frame";
+    IconView * _iconView;
+    NameBar *  _nameBar;
 
 
 public: // looks
@@ -67,27 +62,37 @@ public: // looks
 
 public:
 
-//    void disappear();
-//    void appear();
-
     bool visible = true;
+
+    QString title() {return this->_title; }
+    void setTitle(QString new_title) {this->_title = new_title; }
+
+private:
 
 
 public: // for test
     void animateOpen();
     void animateClose();
-    void animateCycle();
+
+    QRect globalGeometry;
+
     void add_icon(QString p_fileName);
 
+
+protected: // events
 //    void keyPressEvent(QKeyEvent *event);
 
+    void paintEvent(QPaintEvent * /*event*/);
     void mousePressEvent(QMouseEvent * event);
 //    void mouseDoubleClickEvent(QMouseEvent *event);
 
+
 public slots:
     void setColor(QColor p_Color) {};
-    void setOpacity(double p_Opacity);
-    void setPalette(QPalette p_Palette);
+    void setOpacity(double p_Opacity) {};
+    void setPalette(QPalette p_Palette) {};
+
+    void hideAnimation();
 
 };
 

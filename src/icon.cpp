@@ -23,14 +23,14 @@ IconItem::IconItem(QString p_filePath, QWidget * parent) : IconItem(parent)
     this->getIcon();
 }
 
-bool IconItem::isValid()
+bool IconItem::isValid() const
 {
     if(!this->file.exists())
         return false;
     return true;
 }
 
-QString IconItem::fileName()
+QString IconItem::fileName() const
 {
     QString name = this->file.fileName();
     int lastSeparator = name.lastIndexOf("/");
@@ -38,14 +38,14 @@ QString IconItem::fileName()
     return name.mid(lastSeparator + 1, len-1);
 }
 
-QString IconItem::fileNameWithExtention()
+QString IconItem::fileNameWithExtention() const
 {
     QString name = this->file.fileName();
     int lastSeparator = name.lastIndexOf("/");
     return name.mid(lastSeparator + 1);
 }
 
-QString IconItem::fullFilePath()
+QString IconItem::fullFilePath() const
 {
     return this->file.fileName();
 }
@@ -119,6 +119,7 @@ void IconItem::paintEvent(QPaintEvent * /* event */)
 
 void IconItem::mousePressEvent(QMouseEvent *event)
 {
+
     if(event->button() == Qt::RightButton){
         this->contextMenu();
         emit signal_rightClicked(this);
@@ -132,52 +133,37 @@ void IconItem::mousePressEvent(QMouseEvent *event)
         this->state = State::Selected;
         emit signal_clicked(this);
         this->dragStartPosition = event->pos();
-        this->mouseMoveEvent(event);
+//        this->mouseMoveEvent(event);
     }
     update();
 }
 
-void IconItem::mouseMoveEvent(QMouseEvent *event)
-{
-    if(!(event->button() & Qt::LeftButton))
-        return;
-
-    QDrag * drag = new QDrag(this);
-    QMimeData * mimeData = new QMimeData();
-
-    QPixmap pixmap(this->size());
-    this->state = Dragged;
-    this->update();
-    this->render(&pixmap, QPoint(), QRegion(this->rect()));
-
-
-
-    mimeData->setText(this->fullFilePath());
-    drag->setMimeData(mimeData);
-    drag->setPixmap(pixmap);
-
-    Qt::DropAction dropAction = drag->exec(Qt::MoveAction);
-
-    QPoint endSpot = QCursor::pos();
-    this->setGeometry(endSpot.x(), endSpot.y(), this->height(), this->width());
-
-    this->state = Idle;
-
-//    if((event->pos() - dragStartPosition).manhattanLength() <
-//            QApplication::startDragDistance())
+//void IconItem::mouseMoveEvent(QMouseEvent *event)
+//{
+//    if(!(event->button() & Qt::LeftButton))
 //        return;
-//    if(this)
-//    if(event->pos())
+
+//    QDrag * drag = new QDrag(this);
+//    QMimeData * mimeData = new QMimeData();
+
+//    QPixmap pixmap(this->size());
+//    this->state = Dragged;
+//    this->update();
+//    this->render(&pixmap, QPoint(), QRegion(this->rect()));
 
 
-//    QDrag *drag = new QDrag(this);
-//    QMimeData *mimeData = new QMimeData;
 
-//    mimeData->setData(mimeType, data);
+//    mimeData->setText(this->fullFilePath());
 //    drag->setMimeData(mimeData);
+//    drag->setPixmap(pixmap);
 
-        //    Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
-}
+//    Qt::DropAction dropAction = drag->exec(Qt::MoveAction);
+
+//    QPoint endSpot = QCursor::pos();
+//    this->setGeometry(endSpot.x(), endSpot.y(), this->height(), this->width());
+
+//    this->state = Idle;
+//}
 
 void IconItem::enterEvent(QEvent *)
 {

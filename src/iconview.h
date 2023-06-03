@@ -55,8 +55,8 @@ public:
 
 private:  // file managment
 
+    QStringList filesList;
     QList<IconItem *> iconList;
-    QGridLayout * layout;
     QDir directory;
 
 public:   // look
@@ -65,26 +65,29 @@ public:   // look
     int gridWidth;
 //    AnimationPolicy animationPolicy;
     IconPlacementPolicy iconPlacementPolicy;
-    SortingPolicy sortingPolicy;
+    SortingPolicy sortingPolicy = SortByName;
+
+protected:
+
+    void paintEvent(QPaintEvent * /*event*/);
+
 
 public:
 
     void placeIcons();
 
-public:
-
     bool addIcon(IconItem * p_icon);
     bool removeIcon(IconItem * p_icon);
 
     bool setSortingPolicy(SortingPolicy policy);
-    bool setIconPlacementPolicy(IconPlacementPolicy);
+    bool setIconPlacementPolicy(IconPlacementPolicy policy) {}
 };
 bool sortIconsByName(const IconItem & left, const IconItem & right);
-bool sortIconsByNameInverted(const IconItem & left, const IconItem & right);
-
 bool sortIconsBySize(const IconItem & left, const IconItem & right);
-bool sortIconsBySizeInverted(const IconItem & left, const IconItem & right);
+
 }
 
+template <typename T>
+QList<T> reversed( const QList<T> & in );
 
 #endif // ICONVIEW_H

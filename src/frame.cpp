@@ -1,130 +1,132 @@
 #include "frame.h"
+#include <QToolButton>
+#include <QPainterPath>
 
 using namespace Gates;
 
 Frame::Frame(QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
 {
-    this->frameTitle = frameTitle;
+    this->setWindowFlag(Qt::FramelessWindowHint);
+    this->setAttribute(Qt::WA_PaintOnScreen);
+    this->setAttribute(Qt::WA_TranslucentBackground);
+
+    this->_title = frameTitle;
+    this->_nameBar = new NameBar(this);
+    this->_iconView = new IconView(this);
+
+    QVBoxLayout * layout = new QVBoxLayout;
+    layout->addWidget(_iconView);
+    layout->addWidget(_nameBar);
+    this->setLayout(layout);
 }
 
-Frame::Frame(QString p_filename, QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
+Frame::Frame(QString frameTitle, QString p_filename, QWidget *p_parent) : QWidget(p_parent)
 {
-    this->iconView = new IconView(p_filename, p_parent);
-    this->frameTitle = frameTitle;
+    this->setWindowFlag(Qt::FramelessWindowHint);
+    this->setAttribute(Qt::WA_PaintOnScreen);
+    this->setAttribute(Qt::WA_TranslucentBackground);
+
+    this->_title = frameTitle;
+    this->_nameBar = new NameBar(this);
+    this->_iconView = new IconView(p_filename, this);
+
+    QVBoxLayout * layout = new QVBoxLayout;
+    layout->setMargin(0);
+    layout->setSpacing(0);
+
+    QSizePolicy iconViewPolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    _iconView->setSizePolicy(iconViewPolicy);
+
+    layout->addWidget(_iconView, Qt::AlignTop);
+    layout->addWidget(_nameBar, Qt::AlignBottom);
+    this->setLayout(layout);
+    this->setGeometry(300, 300, 400, 400);
 }
 
-void Frame::setOpacity(double p_Opacity)
-{
-    this->setWindowOpacity(p_Opacity);
-    this->opacity = p_Opacity;
-}
-
-void Frame::setPalette(QPalette p_Palette)
-{
-    this->palette = p_Palette;
-}
-
-//void Frame::disappear()
-//{
-//    QGraphicsOpacityEffect * show_effect = new QGraphicsOpacityEffect(this);
-//    this->setGraphicsEffect(show_effect);
-//    QPropertyAnimation * animation = new QPropertyAnimation(show_effect, "opacity");
-//    animation->setDuration(200);
-//    animation->setStartValue(1);
-//    animation->setEndValue(0);
-
-//    animation->start();
-////    this->setVisible(false);
-//}
-
-//void Frame::appear()
-//{
-//    QPropertyAnimation * animation = new QPropertyAnimation(this, "opacity");
-//    animation->setDuration(200);
-//    animation->setStartValue(0);
-//    animation->setEndValue(this->opacity);
-
-////    this->setVisible(true);
-//    animation->start();
-//}
-
-
-void Frame::animateOpen()
-{
-    QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
-    animation->setDuration(200);
-    animation->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
-    animation->setStartValue(QRect(100, 0, 400, 30));
-    animation->setEndValue(QRect(100, 0, 400, 300));
-
-    animation->start();
-//    this->minimised = false;
-}
 
 void Frame::animateClose()
 {
+    int duration = 200;
+
+    QRect FrameStart    = this->rect().translated(mapToGlobal(QPoint(0, 0)));
+    QRect FrameEnd      = FrameStart.adjusted(0, 0, 0, -_iconView->height());
+
+    globalGeometry = FrameStart;
+
     QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
-    animation->setDuration(200);
+
+    animation->setDuration(duration);
     animation->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
-    animation->setStartValue(QRect(100, 0, 400, 300));
-    animation->setEndValue(QRect(100, 0, 400, 30));
 
+    animation->setStartValue(FrameStart);
+    animation->setEndValue(FrameEnd);
     animation->start();
-//    this->minimised = true;
 }
-
-void Frame::animateCycle()
+void Frame::animateOpen()
 {
-    QPropertyAnimation *animationo = new QPropertyAnimation(this, "geometry");
-    animationo->setDuration(200);
-    animationo->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
-    animationo->setStartValue(QRect(100, 0, 400, 30));
-    animationo->setEndValue(QRect(100, 0, 400, 300));
+    int duration = 200;
 
-    QPropertyAnimation *animationc = new QPropertyAnimation(this, "geometry");
-    animationc->setDuration(200);
-    animationc->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
-    animationc->setStartValue(QRect(100, 0, 400, 300));
-    animationc->setEndValue(QRect(100, 0, 400, 30));
+    QRect FrameStart    = this->rect().translated(mapToGlobal(QPoint(0, 0)));
+    QRect FrameEnd      = globalGeometry;
 
+    QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
 
+    animation->setDuration(duration);
+    animation->setEasingCurve(QEasingCurve(QEasingCurve::Type::InOutCubic)); //InOutCubic
+
+    animation->setStartValue(FrameStart);
+    animation->setEndValue(FrameEnd);
+    animation->start();
+}
+void Frame::hideAnimation()
+{
+    static bool open = true;
+
+    if(open){
+        this->animateClose();
+        open = false;
+    }else{
+//        this->setGeometry(0, 0, 500, 300);
+        this->animateOpen();
+        open = true;
+    }
+    return;
 }
 
+
+void Frame::paintEvent(QPaintEvent *)
+{
+    QRect selfRect = this->rect().adjusted(0, 0, -1, -1);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QPainterPath path;
+    path.addRoundedRect(selfRect, 15, 15, Qt::AbsoluteSize);
+
+//    painter.setPen(QPen(Qt::black, 8));
+//    painter.setOpacity(0.6);
+//    painter.drawPath(path);
+
+    painter.setPen(QPen(Qt::black, 1));
+    painter.setOpacity(0.6);
+    painter.fillPath(path, Qt::black);
+
+
+//    painter.setOpacity(0.3);
+//    painter.fillRect(selfRect, Qt::blue);
+//    painter.setBrush(Qt::darkCyan);
+//    painter.drawRect(selfRect);
+}
 void Frame::mousePressEvent(QMouseEvent *event)
 {
-    this->animateClose();
+
 }
 
 
-
-#include <QToolButton>
-
-//void Frame::add_icon(QString p_fileName)
-//{
-//    IconItem * add = new IconItem(p_fileName);
-////    this->Layout->addWidget(add);
-//    add->setWindowOpacity(1);
-
-//}
-
-
-//void Frame::mousePressEvent(QMouseEvent *event)
-//{
-//    if(event->button() == Qt::RightButton)
-//        this->close();
-//    if(event->button() == Qt::LeftButton){
-////        if(minimised)
-//            animateOpen();
-//        else
-//            animateClose();
-//    }
-//}
-
-
-Gates::NameBar::NameBar(QString title, Frame *frame) : QWidget(nullptr)
+Gates::Frame::NameBar::NameBar(Frame *frame) : QWidget(nullptr)
 {
     this->frame = frame;
-    this->title = title;
 
     this->setWindowFlags(Qt::FramelessWindowHint);
     this->setAttribute(Qt::WA_PaintOnScreen);
@@ -136,13 +138,14 @@ Gates::NameBar::NameBar(QString title, Frame *frame) : QWidget(nullptr)
 
     QPushButton * hideButton = new QPushButton("Hide");
     hideButton->setFixedSize(30, 30);
-    QObject::connect(hideButton, SIGNAL(pressed()), this, SLOT(hideButtonPressed()));
+    QObject::connect(hideButton, SIGNAL(pressed()), this->frame, SLOT(hideAnimation()));
 
     QPushButton * menuButton = new QPushButton("Menu");
     menuButton->setFixedSize(30, 30);
-    QObject::connect(menuButton, SIGNAL(pressed()), this, SLOT(menuButtonPressed()));
+//    QObject::connect(menuButton, SIGNAL(pressed()), this, SLOT(menuButtonPressed()));
 
-    QLabel      * titleLabel = new QLabel(title);
+    QLabel      * titleLabel = new QLabel(frame->title());
+    titleLabel->setFont(QFont("Helvetica", 12));
     QPalette sample_palette;
     sample_palette.setColor(QPalette::WindowText, Qt::white);
     titleLabel->setPalette(sample_palette);

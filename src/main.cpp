@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
 //    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
 //    icon.show();
 
-//    Gates::Frame frame("C:\\Users\\Public\\Desktop", "new frame");
-//    frame.show();
+    Gates::Frame frame("Gates Frame", "C:\\Users\\green");
+    frame.show();
 //    frame.animateCycle();
 //    Gates::FramesHandler handler;
 
@@ -44,9 +44,6 @@ int main(int argc, char *argv[])
 
 //    Gates::IconItem discord("C:\\Users\\green\\Desktop\\Discord.lnk");
 //    discord.show();
-
-    Gates::NameBar test("test name bar");
-    test.show();
 
     // test comment to check if commit is working
 
