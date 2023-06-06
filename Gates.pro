@@ -15,22 +15,20 @@ DESTDIR = lib
 
 SOURCES += \
     src/contextmenu.cpp \
-    src/desktopframe.cpp \
     src/frame.cpp \
-    src/frameshandler.cpp \
     src/icon.cpp \
     src/iconview.cpp \
     src/main.cpp \
+    src/manager.cpp \
     utilities/QtIconProviderExample.cpp \
     utilities/shellqt.cpp
 
 HEADERS += \
     src/contextmenu.h \
-    src/desktopframe.h \
     src/frame.h \
-    src/frameshandler.h \
     src/icon.h \
     src/iconview.h \
+    src/manager.h \
     utilities/shellqt.h
 
 CONFIG += lrelease

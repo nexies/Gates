@@ -74,6 +74,8 @@ protected:
 
 public:
 
+    QString path() {return this->directory.path(); }
+
     void placeIcons();
 
     bool addIcon(IconItem * p_icon);

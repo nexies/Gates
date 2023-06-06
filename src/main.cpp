@@ -5,7 +5,7 @@
 #include <QTextStream>
 
 #include "iconview.h"
-#include "frameshandler.h"
+#include "manager.h"
 #include "frame.h"
 #include "icon.h"
 #include <QStyle>
@@ -31,21 +31,12 @@ int main(int argc, char *argv[])
 {
 
     QApplication a( argc, argv );
+    QApplication::setStartDragDistance(10);
+    Gates::Manager manager;
 
-//    Gates::IconItem icon("C:\\Users\\Public\\Desktop\\TeamViewer.lnk");
-//    icon.show();
-
-    Gates::Frame frame("Gates Frame", "C:\\Users\\green");
-    frame.show();
-//    frame.animateCycle();
-//    Gates::FramesHandler handler;
-
-//    handler.collectAllDesktopFiles();
-
-//    Gates::IconItem discord("C:\\Users\\green\\Desktop\\Discord.lnk");
-//    discord.show();
-
-    // test comment to check if commit is working
+    manager.makeNewFrame("Gates Frame", "C:\\Users\\green");
+    manager.makeNewFrame("Gates Frame", "C:\\Users\\green");
+//    manager.makeNewFrame("Gates Frame", "C:\\Users\\green");
 
     return a.exec();
 }
