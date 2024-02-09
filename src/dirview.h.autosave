@@ -1,0 +1,50 @@
+#ifndef DIRVIEW_H
+#define DIRVIEW_H
+
+#include <QTableView>
+#include <QTreeView>
+#include <QListView>
+#include <QWidget>
+#include <QStyledItemDelegate>
+
+class QFileSystemModel;
+class QFile;
+
+
+class DirViewItemDelegate : public QStyledItemDelegate
+{
+  public: 
+    DirViewItemDelegate(QObject * parent = nullptr) : QStyledItemDelegate(parent) {}
+    
+    void paint(QPainter * painter, 
+               const QStyleOptionViewItem &option,
+               const QModelIndex & index
+               );
+    QSize sizeHint(const QStyleOptionViewItem & option, 
+                   const QModelIndex & index
+                   ) const;
+    static initStyleOption(QSty)
+};
+
+
+class DirView : public QListView
+{
+    Q_OBJECT
+
+public:
+    DirView(QWidget * parent = nullptr);
+    DirView(const QString & path, QWidget * parent = nullptr);
+    DirView(const QFile & file, QWidget * parent = nullptr);
+
+    bool setDirectory(const QString & path);
+    bool setDirectory(const QFile & file);
+
+    QFileSystemModel * fileSystemModel;
+
+protected slots:
+    void onActivated(const QModelIndex &);
+protected:
+//    void paintEvent(QPaintEvent *) override;
+};
+
+#endif // DIRVIEW_H
