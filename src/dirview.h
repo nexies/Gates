@@ -6,8 +6,12 @@
 #include <QListView>
 #include <QWidget>
 
+#include "dirviewitemdelegate.h"
+
 class QFileSystemModel;
 class QFile;
+
+
 
 
 class DirView : public QListView
@@ -23,6 +27,7 @@ public:
     bool setDirectory(const QFile & file);
 
     QFileSystemModel * fileSystemModel;
+    DirViewItemDelegate * delegate;
 
 protected slots:
     void onActivated(const QModelIndex &);

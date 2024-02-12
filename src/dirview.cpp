@@ -5,13 +5,14 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QPainter>
 
 DirView::DirView(QWidget * parent)
 {
     this->setParent(parent);
     this->setAttribute(Qt::WA_TranslucentBackground);
     this->viewport()->setAutoFillBackground(false);
-    this->setAutoFillBackground(false);
+//    this->setAutoFillBackground(false);
     this->setFrameStyle(0);
 
     this->setMovement(DirView::Free);
@@ -22,6 +23,9 @@ DirView::DirView(QWidget * parent)
     this->setDragEnabled(true);
     connect(this, &DirView::activated,
             this, &DirView::onActivated);
+    delegate = new DirViewItemDelegate(this);
+    this->setItemDelegate(delegate);
+    this->viewport()->setAttribute(Qt::WA_Hover);
 }
 
 DirView::DirView(const QString &path, QWidget *parent)
@@ -65,18 +69,4 @@ void DirView::onActivated(const QModelIndex &index)
     QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
 
-//void DirView::paintEvent(QPaintEvent *)
-//{
-
-//}
-
-void DirViewItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)
-{
-
-}
-
-QSize DirViewItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
-{
-
-}
 
