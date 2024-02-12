@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QPainter>
+#include <QScrollBar>
 
 DirView::DirView(QWidget * parent)
 {
@@ -26,6 +27,10 @@ DirView::DirView(QWidget * parent)
     delegate = new DirViewItemDelegate(this);
     this->setItemDelegate(delegate);
     this->viewport()->setAttribute(Qt::WA_Hover);
+
+    setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    verticalScrollBar()->setSingleStep(5);
 }
 
 DirView::DirView(const QString &path, QWidget *parent)

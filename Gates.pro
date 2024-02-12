@@ -14,6 +14,7 @@ DESTDIR = lib
 
 SOURCES += \
     src/contextmenu.cpp \
+    src/dirviewitemdelegate.cpp \
     src/frame.cpp \
     src/icon.cpp \
     src/iconview.cpp \
@@ -24,6 +25,7 @@ SOURCES += \
 
 HEADERS += \
     src/contextmenu.h \
+    src/dirviewitemdelegate.h \
     src/frame.h \
     src/icon.h \
     src/iconview.h \

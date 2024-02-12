@@ -32,6 +32,7 @@ Frame::Frame(QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
     QVBoxLayout * layout = new QVBoxLayout;
     layout->addWidget(_dirView);
     layout->addWidget(_nameBar);
+    layout->setContentsMargins(3, 150, 40, 40);
     this->setLayout(layout);
 }
 
