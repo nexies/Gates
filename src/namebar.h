@@ -2,6 +2,7 @@
 #define FRAMENAMEBAR_H
 
 #include <QWidget>
+#include <QLabel>
 
 namespace Gates{
 
@@ -27,8 +28,11 @@ protected:
 
     void mouseMoveEvent(QMouseEvent * event);
 
+public slots:
+    void setTitle(const QString & str);
 
 public:
+    QLabel * titleLabel;
     Gates::Frame * frame;
     QPoint startDragPos;
 };

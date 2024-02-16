@@ -17,6 +17,8 @@
 #include <QPaintEngine>
 #include <QPushButton>
 #include <QLabel>
+#include <QMetaProperty>
+#include <QDebug>
 
 using namespace std;
 //using namespace Gates;
@@ -27,10 +29,6 @@ using namespace std;
 //"C:\\Program Files\\TeamViewer\\TeamViewer.exe"
 
 
-
-
-
-
 int main(int argc, char *argv[])
 {
 
@@ -38,9 +36,7 @@ int main(int argc, char *argv[])
     QApplication::setStartDragDistance(10);
     Gates::Manager manager;
 
-    manager.makeNewFrame("Gates Frame", "/home/nexie");
-//    manager.makeNewFrame("Gates Frame", "C:\\Users\\green");
-//    manager.makeNewFrame("Gates Frame", "C:\\Users\\green");
+    manager.makeNewFrame("Frame", "/home/nexie");
 
     return a.exec();
 }

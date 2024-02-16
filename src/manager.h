@@ -22,6 +22,7 @@ public:
     }
 
 public:
+    void makeNewFrame(QString filePath, QRect geometry = QRect(0, 0, 700, 400));
     void makeNewFrame(QString frameName, QString filePath, QRect geometry = QRect(0, 0, 700, 400));
 
 

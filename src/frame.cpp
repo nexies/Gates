@@ -2,6 +2,8 @@
 #include <QToolButton>
 #include <QPainterPath>
 #include <QTextStream>
+#include <QDebug>
+#include <QDesktopWidget>
 
 using namespace Gates;
 
@@ -18,51 +20,50 @@ QTextStream & operator << (QTextStream & stream, const QRect & rect){
 
 QTextStream qout(stdout);
 
-Frame::Frame(QString frameTitle, QWidget *p_parent) : QWidget(p_parent)
+Frame::Frame(QWidget * parent) :
+    QWidget(parent)
 {
-    this->setWindowFlag(Qt::FramelessWindowHint);
-//    this->setAttribute(Qt::WA_PaintOnScreen);
+    this->setWindowFlags(Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
     this->setAttribute(Qt::WA_TranslucentBackground);
+//    this->setAttribute(Qt::WA_MouseTracking);
 
-    this->_title = frameTitle;
-    this->_nameBar = new NameBar(this);
-//    this->_iconView = new IconView(this);
-    this->_dirView = new DirView(this);
-
-    QVBoxLayout * layout = new QVBoxLayout;
-    layout->addWidget(_dirView);
-    layout->addWidget(_nameBar);
-    layout->setContentsMargins(3, 150, 40, 40);
+    layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 0);
     this->setLayout(layout);
+    res = new Resizable(this);
+    connect(res, &Resizable::geometryUpdated,
+            this, &Frame::onGeometryUpdated);
+    setParent(QApplication::desktop());
 }
 
-Frame::Frame(QString frameTitle, QString p_filename, QWidget *p_parent) : QWidget(p_parent)
+Frame::Frame(QString frameTitle, QWidget *parent) :
+    Frame(parent)
 {
-    this->setWindowFlag(Qt::FramelessWindowHint);
-//    this->setAttribute(Qt::WA_PaintOnScreen);
-    this->setAttribute(Qt::WA_TranslucentBackground);
+    _title = frameTitle;
+    this->_nameBar = new NameBar(this);
+    this->_dirView = new DirView(this);
+    layout->addWidget(_dirView);
+    layout->addWidget(_nameBar);
+}
+
+Frame::Frame(QString frameTitle, QString p_filename, QWidget *parent) :
+    Frame(parent)
+{
 
     this->_title = frameTitle;
     this->_nameBar = new NameBar(this);
-//    this->_iconView = new IconView(p_filename, this);
     this->_dirView = new DirView(p_filename, this);
 
-
-    QVBoxLayout * layout = new QVBoxLayout;
-    layout->setMargin(0);
-    layout->setSpacing(0);
-
     QSizePolicy iconViewPolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    /*_iconView*/_dirView->setSizePolicy(iconViewPolicy);
+    _dirView->setSizePolicy(iconViewPolicy);
 
-    layout->addWidget(/*_iconView*/_dirView, Qt::AlignTop);
+    layout->addWidget(_dirView, Qt::AlignTop);
     layout->addWidget(_nameBar, Qt::AlignBottom);
     this->setLayout(layout);
 
     openStateRect = this->geometry();
     closedStateRect = this->_nameBar->geometry();
-
-    qout << "INIT: " << openStateRect << " " << closedStateRect << endl;
+//    qout << "INIT: " << openStateRect << " " << closedStateRect << endl;
 }
 
 
@@ -118,7 +119,7 @@ void Frame::changeOpenClosedStates()
         else{
             this->openStateRect = QRect(this->pos().x() - totalWidth + this->width(),this->pos().y() - totalHeight + this->height(), totalWidth, totalHeight);
         }
-        qout << openStateRect << " " << closedStateRect << endl;
+        qDebug() << openStateRect << " " << closedStateRect;
         break;
     case 1: // DockedTop
         this->closedStateRect = QRect(this->pos().x(), this->pos().y(), this->_nameBar->width(), this->_nameBar->height());
@@ -148,6 +149,16 @@ void Frame::hideAnimation()
         this->animateOpen();
     else
         this->animateClose();
+}
+
+void Frame::onGeometryUpdated()
+{
+    totalWidth = this->width();
+    if(!this->closed)
+        totalHeight = this->height();
+
+    qDebug() << this->geometry();
+    changeOpenClosedStates();
 }
 
 
@@ -191,7 +202,7 @@ void Frame::moveAction(QMouseEvent *event, QPoint startMovePos)
     if(!this->underMouse())
         return;
 
-    this->setOpenState(true, false);
+//    this->setOpenState(true, false);
     QPoint whereTo = event->globalPos() - startMovePos;
 
     if(whereTo.y() < 15){
@@ -204,7 +215,7 @@ void Frame::moveAction(QMouseEvent *event, QPoint startMovePos)
     if(whereTo.x() + this->width() >= 1920)
         whereTo.rx() = 1920 - this->width() + 1;
     this->move(whereTo);
-    qout << this->geometry() << endl;
+//    qDebug() << this->geometry();
     this->changeOpenClosedStates();
 }
 

@@ -30,7 +30,7 @@ DirView::DirView(QWidget * parent)
 
     setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
     setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-    verticalScrollBar()->setSingleStep(5);
+
 }
 
 DirView::DirView(const QString &path, QWidget *parent)

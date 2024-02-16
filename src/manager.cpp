@@ -15,6 +15,22 @@ Manager::Manager() {
 */
 }
 
+void Gates::Manager::makeNewFrame(QString filePath, QRect geometry)
+{
+    if(!QDir(filePath).exists()){
+        cerr << "Gates::Manager error: Invalid path. Can't create a Frame" << endl;
+        return;
+    }
+
+    Frame * newFrame = new Frame(filePath);
+    newFrame->setGeometry(geometry);
+    allFrames.append(newFrame);
+
+    // @todo: link the delete signal from newFrame to Manager
+
+    newFrame->show();
+}
+
 void Gates::Manager::makeNewFrame(QString frameName, QString filePath, QRect geometry)
 {
     if(!QDir(filePath).exists()){

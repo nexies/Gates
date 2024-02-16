@@ -11,9 +11,6 @@
 class QFileSystemModel;
 class QFile;
 
-
-
-
 class DirView : public QListView
 {
     Q_OBJECT

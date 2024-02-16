@@ -13,6 +13,7 @@
 #include "iconview.h"
 #include "icon.h"
 #include "dirview.h"
+#include "resizable.h"
 
 namespace Gates{
 
@@ -34,7 +35,7 @@ class Frame: public QWidget
 
 
 public:
-    Frame () {}
+    Frame (QWidget * parent);
     Frame(QString frameTitle, QWidget * p_parent = nullptr);
     Frame(QString frameTitle, QString p_filename, QWidget * p_parent = nullptr);
     ~Frame() {std::cout << "Frame " << _title.toStdString() << " destroied" << std::endl; }
@@ -45,7 +46,8 @@ private:
     IconView * _iconView;
     NameBar *  _nameBar;
     DirView * _dirView;
-
+    QVBoxLayout * layout;
+    Resizable * res;
 
 public: // looks
     double opacity;
@@ -64,7 +66,7 @@ public: // instantaneous properties
     int totalHeight;
     int totalWidth;
 
-    QString title() {return this->_title; }
+    const QString title() {return this->_title; }
     void setTitle(QString new_title) {this->_title = new_title; }
 
 
@@ -95,7 +97,7 @@ protected: // events
     void paintEvent(QPaintEvent * /*event*/);
     void mousePressEvent(QMouseEvent * event);
     void enterEvent(QEvent * /*event*/) {this->underCursor = true;
-                                        std::cout << "in under cursor" << std::endl;
+                                        std::cout << "is under cursor" << std::endl;
                                         if(dockedState != NotDocked) setOpenState(true);}
     void leaveEvent(QEvent * /*event*/) {this->underCursor = false;
                                         std::cout << "is not under cursor" << std::endl;
@@ -111,6 +113,8 @@ public slots:
 
     void finishedAnimating () {animated = false;}
     void hideAnimation();
+
+    void onGeometryUpdated();
 
 };
 

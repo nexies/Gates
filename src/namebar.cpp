@@ -29,14 +29,20 @@ void Gates::NameBar::mouseMoveEvent(QMouseEvent *event){
     this->frame->moveAction(event, startMovePos);
 }
 
+void Gates::NameBar::setTitle(const QString &str)
+{
+    this->titleLabel->setText(str);
+}
+
 Gates::NameBar::NameBar(Frame *frame) : QWidget(nullptr)
 {
     this->frame = frame;
 
-    this->setFixedHeight(60);
+    this->setFixedHeight(40);
 
-    QLabel      * titleLabel = new QLabel(frame->title());
+    titleLabel = new QLabel();
     titleLabel->setFont(QFont("Helvetica", 12));
+    setTitle(frame->title());
     QPalette sample_palette;
     sample_palette.setColor(QPalette::WindowText, Qt::white);
     titleLabel->setPalette(sample_palette);
@@ -45,6 +51,7 @@ Gates::NameBar::NameBar(Frame *frame) : QWidget(nullptr)
     titleLabel->setSizePolicy(titleSizePolicy);
 
     QHBoxLayout * layout = new QHBoxLayout;
+    layout->setContentsMargins(0, 0, 0, 0);
 
     layout->addWidget(titleLabel);
 
