@@ -52,3 +52,36 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+# CMake build files
+cmake-build*
+
+# CLion files
+.idea*
+
+[Bb]in/
+[Bb]in64/
+[Bb]uild*/
+*.7z
+*.zip
+*.rar
+*.tar
+*.gz
+*.xz
+*.exe
+*.lib
+*.pdb
+*.ilk
+*.exp
+*.obj
+build.user.bat
+build.user.sh
+user.conf
+[Dd]oc/
+[Dd]ocs/
+Thumbs.db
+*.rc
+*.qm
+*.bin
+*.run
+.qmake.conf

@@ -1,0 +1,46 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/sync_problem.png</file>
+        <file>icons/switch_access_shortcut_add.png</file>
+        <file>icons/star_filled.png</file>
+        <file>icons/star.png</file>
+        <file>icons/settings_filled.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/search.png</file>
+        <file>icons/plus_filled.png</file>
+        <file>icons/open_with.png</file>
+        <file>icons/more_vert.png</file>
+        <file>icons/more_horiz.png</file>
+        <file>icons/menu.png</file>
+        <file>icons/logout.png</file>
+        <file>icons/login.png</file>
+        <file>icons/last_page.png</file>
+        <file>icons/key_off.png</file>
+        <file>icons/keyboard_double_arrow_right.png</file>
+        <file>icons/key.png</file>
+        <file>icons/home_filled.png</file>
+        <file>icons/home.png</file>
+        <file>icons/favorite.png</file>
+        <file>icons/expand_content.png</file>
+        <file>icons/exit_to_app.png</file>
+        <file>icons/done_all.png</file>
+        <file>icons/close.png</file>
+        <file>icons/clear_all.png</file>
+        <file>icons/chevron_right.png</file>
+        <file>icons/chevron_left.png</file>
+        <file>icons/check_small.png</file>
+        <file>icons/check_indeterminate.png</file>
+        <file>icons/check.png</file>
+        <file>icons/cancel_filled.png</file>
+        <file>icons/bolt.png</file>
+        <file>icons/autorenew.png</file>
+        <file>icons/arrow_up.png</file>
+        <file>icons/arrow_outward.png</file>
+        <file>icons/arrow_back.png</file>
+        <file>icons/add_task.png</file>
+        <file>fonts/texgyreadventor-bold.otf</file>
+        <file>fonts/texgyreadventor-bolditalic.otf</file>
+        <file>fonts/texgyreadventor-italic.otf</file>
+        <file>fonts/texgyreadventor-regular.otf</file>
+    </qresource>
+</RCC>
