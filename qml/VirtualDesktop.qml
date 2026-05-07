@@ -49,13 +49,40 @@ Window {
                 styleColor: "#80000000"
             }
 
-            // ── Drag to reposition ───────────────────────────────────────────
+            // ── Drag to reposition / move to frame ──────────────────────────
             DragHandler {
+                target: null   // ghost handles visuals; position updated on drop
+                dragThreshold: 6
+
                 onActiveChanged: {
-                    if (!active)
-                        desktopIconModel.setPosition(model.index,
-                                                     iconDelegate.x,
-                                                     iconDelegate.y)
+                    const gp = iconDelegate.mapToGlobal(centroid.position.x,
+                                                        centroid.position.y)
+                    if (active) {
+                        // sourceFrameId "" → came from desktop
+                        dragDropService.startDrag("", model.path, gp.x, gp.y)
+                    } else {
+                        const droppedOnFrame = dragDropService.commitDrop(gp.x, gp.y)
+                        if (!droppedOnFrame) {
+                            // Landed on desktop — snap to grid and save position.
+                            // root.x/y is the screen origin (set by DesktopLayer).
+                            const cellW = 90
+                            const cellH = 100
+                            const localX = gp.x - root.x
+                            const localY = gp.y - root.y
+                            const snappedX = Math.round(localX / cellW) * cellW
+                            const snappedY = Math.round(localY / cellH) * cellH
+                            desktopIconModel.setPosition(model.index, snappedX, snappedY)
+                        }
+                        // else: FrameDispatcher.onDropOnFrame moves the file
+                    }
+                }
+
+                onCentroidChanged: {
+                    if (active) {
+                        const gp = iconDelegate.mapToGlobal(centroid.position.x,
+                                                            centroid.position.y)
+                        dragDropService.updatePos(gp.x, gp.y)
+                    }
                 }
             }
 

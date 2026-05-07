@@ -124,6 +124,18 @@ ResizableFramelessWindow {
         }
     }
 
+    // Drop target highlight — appears when another icon is dragged over this frame
+    Rectangle {
+        anchors.fill: parent
+        color:   "white"
+        radius:  backgroundSettings.radius
+        opacity: dragDropService.active && dragDropService.hoveredFrameId === frameId &&
+                 dragDropService.sourceFrameId !== frameId ? 0.12 : 0
+        visible: opacity > 0
+        z: 1
+        Behavior on opacity { NumberAnimation { duration: 120 } }
+    }
+
     Item
     {
         id: iconView
@@ -152,13 +164,9 @@ ResizableFramelessWindow {
         anchors.bottom: parent.bottom
 
 
-        layer.enabled: true
-
-        IconGridView
-        {
+        IconGridView {
             id: grid
-            anchors.fill: iconView
-            width: iconView.width
+            anchors.fill: parent
             model: my_fileModel
         }
 

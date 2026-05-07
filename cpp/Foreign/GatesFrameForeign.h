@@ -17,7 +17,8 @@ public:
     explicit FrameForeign(const FrameConfig & cfg, QObject * parent = nullptr);
 
     const QString & frameId() const { return _id; }
-    QWindow       * window()        { return _window.get(); }
+    QWindow       * window()  const { return _window.get(); }
+    QString         dirPath()  const { return _dirModel ? _dirModel->currentDirPath() : QString(); }
 
     void applyConfig(const FrameConfig & cfg);
 

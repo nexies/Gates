@@ -72,6 +72,10 @@ void DesktopLayer::createWindowForScreen(QScreen * screen)
     window->setScreen(screen);
     window->setGeometry(screen->geometry());
 
+    // Keep Qt's focus system away from this window (Win32 WS_EX_NOACTIVATE alone
+    // is not enough — Qt routes QFocusEvent internally without checking it)
+    window->setFlag(Qt::WindowDoesNotAcceptFocus, true);
+
     // Apply HWND_BOTTOM + WS_EX_TOOLWINDOW + WS_EX_NOACTIVATE
     WindowHelper::makeDesktopWindow(window, /*noActivate=*/true);
 

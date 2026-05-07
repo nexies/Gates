@@ -113,16 +113,20 @@ static QPixmap iconToPixmap(HICON hIcon, int size)
 static const IID kIID_IImageList =
     {0x46eb5926, 0x582e, 0x4017, {0x9f,0xdf,0xe8,0x99,0x8d,0xaa,0x09,0x50}};
 
-static QPixmap pixmapFromImageList(int listId, int iIcon, int size)
+static QPixmap pixmapFromImageList(int listId, int iIcon, int size, int overlayIndex = 0)
 {
     IImageList * imageList = nullptr;
     if (FAILED(SHGetImageList(listId, kIID_IImageList,
                               reinterpret_cast<void **>(&imageList))))
         return {};
 
+    UINT flags = ILD_TRANSPARENT;
+    if (overlayIndex > 0)
+        flags |= INDEXTOOVERLAYMASK(overlayIndex); // composite shortcut arrow, cloud badge, etc.
+
     QPixmap result;
     HICON hIcon = nullptr;
-    if (SUCCEEDED(imageList->GetIcon(iIcon, ILD_TRANSPARENT, &hIcon)) && hIcon) {
+    if (SUCCEEDED(imageList->GetIcon(iIcon, flags, &hIcon)) && hIcon) {
         result = iconToPixmap(hIcon, size);
         DestroyIcon(hIcon);
     }
@@ -146,12 +150,21 @@ QIcon extractIcons(const QString & sourceFile)
 
     QIcon result;
 
-    // --- Step 1: get system icon index (needed for image list lookup) ---
+    // --- Step 1: system icon index + overlay index ---
+    // SHGFI_OVERLAYINDEX stores the overlay in bits 24-31 of iIcon.
+    // This covers shortcut arrows, OneDrive/cloud sync badges, UAC shields, etc.
+#ifndef SHGFI_OVERLAYINDEX
+#  define SHGFI_OVERLAYINDEX 0x00000040
+#endif
     SHFILEINFOW infoIdx = {};
     const bool gotIdx = SHGetFileInfoW(path, attrs, &infoIdx, sizeof(infoIdx),
-                                       SHGFI_SYSICONINDEX | useAttr) != 0;
+                                       SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX | useAttr) != 0;
+
+    const int baseIconIdx  = gotIdx ? (infoIdx.iIcon & 0x00FFFFFF) : 0;
+    const int overlayIndex = gotIdx ? ((static_cast<unsigned>(infoIdx.iIcon) >> 24) & 0xFF) : 0;
 
     // --- Step 2: small (16) and large (32) via SHGetFileInfoW ---
+    // SHGFI_ICON already composites the overlay into the returned HICON.
     for (DWORD sizeFlag : { (DWORD)SHGFI_SMALLICON, (DWORD)SHGFI_LARGEICON }) {
         SHFILEINFOW info = {};
         if (SHGetFileInfoW(path, attrs, &info, sizeof(info),
@@ -164,13 +177,13 @@ QIcon extractIcons(const QString & sourceFile)
     }
 
     // --- Step 3: extralarge (48) and jumbo (256) via system image lists ---
+    // Image list lookup bypasses the shell's automatic overlay compositing,
+    // so we pass overlayIndex explicitly.
     if (gotIdx) {
-        // SHIL_EXTRALARGE = 2 → 48×48
-        QPixmap pm48 = pixmapFromImageList(SHIL_EXTRALARGE, infoIdx.iIcon, 48);
+        QPixmap pm48 = pixmapFromImageList(SHIL_EXTRALARGE, baseIconIdx, 48, overlayIndex);
         if (!pm48.isNull()) result.addPixmap(pm48);
 
-        // SHIL_JUMBO = 4 → 256×256
-        QPixmap pm256 = pixmapFromImageList(SHIL_JUMBO, infoIdx.iIcon, 256);
+        QPixmap pm256 = pixmapFromImageList(SHIL_JUMBO, baseIconIdx, 256, overlayIndex);
         if (!pm256.isNull()) result.addPixmap(pm256);
     }
 

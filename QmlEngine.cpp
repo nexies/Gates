@@ -6,13 +6,15 @@
 
 #include "cpp/CustomQmlTypes/IconProvider.h"
 #include "cpp/CustomQmlTypes/DesktopService.h"
+#include "cpp/CustomQmlTypes/DragDropService.h"
 
 namespace {
 
 void setRootContextProperties(QQmlApplicationEngine * app)
 {
     app->addImageProvider("gates_icon_provider", new IconProvider());
-    app->rootContext()->setContextProperty("desktopService", new DesktopService(app));
+    app->rootContext()->setContextProperty("desktopService",    new DesktopService(app));
+    app->rootContext()->setContextProperty("dragDropService",   &DragDropService::instance());
 }
 
 void addFonts()

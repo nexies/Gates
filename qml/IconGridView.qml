@@ -11,8 +11,16 @@ GridView
 
     anchors.leftMargin: 20
     anchors.rightMargin: 20
+    clip: true
     snapMode: GridView.SnapToRow
     boundsBehavior: GridView.StopAtBounds
+
+    property real _savedContentY: 0
+    Connections {
+        target: grid.model
+        function onModelAboutToBeReset() { grid._savedContentY = grid.contentY }
+        function onModelReset()          { grid.contentY = grid._savedContentY }
+    }
 
     // ScrollBar.vertical: ScrollBar
     // {

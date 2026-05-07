@@ -11,7 +11,8 @@ qt_find(
         VERSION 6
         COMPONENTS Core Gui Widgets Qml Quick QuickWidgets
         REQUIRED
-        PATH "D:\\Qt2"
+        PLATFORM mingw 64
+#        PATH "D:\\Qt2"
 )
 
 
@@ -49,6 +50,8 @@ add_executable(Gates main.cpp
         cpp/CustomQmlTypes/DirEntryModel.h
         cpp/CustomQmlTypes/IconProvider.cpp
         cpp/CustomQmlTypes/IconProvider.h
+        cpp/CustomQmlTypes/DragDropService.cpp
+        cpp/CustomQmlTypes/DragDropService.h
 
         cpp/FileSystem/FileSystemEntry.cpp
         cpp/FileSystem/FileSystemEntry.h
@@ -93,6 +96,7 @@ target_link_libraries(Gates PRIVATE
         ${QT_FIND_TARGETS}
         shlwapi     # ILClone, ILRemoveLastID, SHParseDisplayName
         comctl32    # SetWindowSubclass / DefSubclassProc
+        ole32       # CoCreateInstance (IExplorerBrowser)
 )
 
 # Must be before qt_add_qml_module so qmltyperegistrar can find the headers
@@ -119,6 +123,7 @@ qt_add_qml_module(Gates
         qml/NameBarCustomButton.qml
         qml/testFrame.qml
         qml/VirtualDesktop.qml
+        qml/DragGhost.qml
     SOURCES
         cpp/CustomQmlTypes/RoundedRect.cpp
         cpp/CustomQmlTypes/RoundedRect.h
@@ -130,6 +135,8 @@ qt_add_qml_module(Gates
         cpp/CustomQmlTypes/FileSystemModel.h
         cpp/Shell/DesktopIconModel.cpp
         cpp/Shell/DesktopIconModel.h
+        cpp/Shell/ShellFolderView.cpp
+        cpp/Shell/ShellFolderView.h
 )
 
 
