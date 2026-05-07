@@ -36,12 +36,20 @@ GridView
 
     delegate: GatesGridViewDelegate
     {
-        MouseArea
-        {
-            anchors.fill: parent
-            onClicked: { grid.currentIndex = index; }
-            onDoubleClicked: {
-                desktopService.openLocalFile(filePath);
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            onTapped:        grid.currentIndex = index
+            onDoubleTapped:  desktopService.shellOpen(filePath)
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: (eventPoint) => {
+                grid.currentIndex = index
+                desktopService.showContextMenu(
+                    filePath,
+                    Math.round(eventPoint.globalPosition.x),
+                    Math.round(eventPoint.globalPosition.y))
             }
         }
     }

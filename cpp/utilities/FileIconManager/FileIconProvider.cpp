@@ -1,53 +1,45 @@
 #include "FileIconProvider.h"
-#include <QDebug>
-#include <QElapsedTimer>
 
-#include <qsystemdetection.h>
+#include <QDebug>
 #include <QImageReader>
-#include <QByteArray>
 
 #ifdef Q_OS_WIN
-#include "cpp/utilities/win/shellqt.h"
+#  include "cpp/utilities/win/shellqt.h"
 #endif
 
-FileIconProvider::FileIconProvider()
+FileIconProvider::FileIconProvider() {}
+
+QIcon FileIconProvider::icon(const QFileInfo & info) const
 {
-
-}
-
-QIcon FileIconProvider::icon(const QFileInfo &info) const
-{
-    QByteArray imageFormat = QImageReader::imageFormat(info.filePath());
-
-    if(!imageFormat.isEmpty())
-    {
-        qDebug() << "[FileIconProvider] : file " << info.fileName() << "seems to be an image";
+#ifdef Q_OS_WIN
+    // For image files, compose shell icon + scaled thumbnail
+    if (!QImageReader::imageFormat(info.filePath()).isEmpty())
         return extractImageIcon(info);
-    }
+
+    // For all other files (including .lnk shortcuts), use the shell icon
+    QIcon shellIcon = extractIcons(info.filePath());
+    if (!shellIcon.isNull())
+        return shellIcon;
+#endif
 
     return QFileIconProvider::icon(info);
 }
 
-QIcon FileIconProvider::extractImageIcon(const QFileInfo &info) const
+QIcon FileIconProvider::extractImageIcon(const QFileInfo & info) const
 {
-    QImageReader reader;
-    reader.setFileName(info.filePath());
-    QIcon stdIcon = QFileIconProvider::icon(info);
-
-    QImage image = reader.read();
-    QPixmap pixmap = QPixmap::fromImage(image);
-    // qDebug() << "[FileIconProvider] : resulting pixmap size : " << pixmap.size();
+    QImageReader reader(info.filePath());
+    QImage       image = reader.read();
 
     QIcon out;
-    QElapsedTimer timer;
+    if (!image.isNull()) {
+        const QPixmap pm = QPixmap::fromImage(image);
+        out.addPixmap(pm.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        out.addPixmap(pm.scaled(512, 512, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
 
-    timer.start();
-    out.addPixmap(stdIcon.pixmap({32, 32}));
-    out.addPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::FastTransformation));
-    out.addPixmap(pixmap.scaled(512, 512, Qt::KeepAspectRatio, Qt::FastTransformation));
-
-    // qDebug() << "[FileIconProvider] : Pixmap scalings took " << timer.elapsed() << " milliseconds";
-    // qDebug() << "                                          " << timer.nsecsElapsed() << " nanoseconds";
+    // Fallback: shell icon at small size
+    QIcon shellIcon = QFileIconProvider::icon(info);
+    out.addPixmap(shellIcon.pixmap(32, 32));
 
     return out;
 }

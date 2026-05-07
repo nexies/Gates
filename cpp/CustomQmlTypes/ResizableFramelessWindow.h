@@ -1,10 +1,12 @@
 #pragma once
 
+#include <QQmlEngine>
 #include <QQuickWindow>
 
 class ResizableFramelessWindow : public QQuickWindow
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(bool blurBehind READ blurBehind WRITE setBlurBehind)
     Q_PROPERTY(int edgeOffset READ edgeOffset WRITE setEdgeOffset)
 

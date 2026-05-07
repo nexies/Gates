@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import CustomQmlTypes
+import Gates
 
 ResizableFramelessWindow {
     property string name: "GatesFrame"
@@ -185,7 +185,7 @@ ResizableFramelessWindow {
         }
 
         onOptionsButtonTriggered: {
-            debugRect.visible = !(debugRect.visible)
+            // TODO: open options panel
         }
 
         DragHandler {

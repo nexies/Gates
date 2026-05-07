@@ -1,44 +1,64 @@
-﻿#include <QApplication>
-#include <QDebug>
-#include <QDir>
-
-#include <QStandardPaths>
-#include "cpp/Foreign/GatesFrameForeign.h"
-#include <QQuickWindow>
-
-#include <QDebug>
-#include "cpp/utilities/win/Functions.h"
-
 #include <QApplication>
-#include <QWidget>
+#include <QDebug>
 
-int main(int argc, char *argv[])
+#include "cpp/Config/ConfigManager.h"
+#include "cpp/Core/GatesFrameDispatcher.h"
+#include "cpp/Shell/DesktopShellManager.h"
+#include "cpp/Shell/DesktopLayer.h"
+
+// Restore native desktop icons on crash so the user is never left with a
+// blank desktop. Chains to any previously installed handler.
+static LPTOP_LEVEL_EXCEPTION_FILTER s_prevExceptionFilter = nullptr;
+
+static LONG WINAPI gatesExceptionFilter(EXCEPTION_POINTERS * ep)
 {
-
-    QApplication a(argc, argv);
-    GatesFrameForeign fr;
-    GatesFrameForeign fr2;
-    GatesFrameForeign fr3;
-    qDebug() << QDir::homePath();
-    // fr.setDirectory(QDir::homePath() + QDir::separator() + "OneDrive" + QDir::separator() + "Рабочий стол");
-    fr.setDirectory("C:\\Users\\nexie\\Downloads");
-    fr2.setDirectory("C:\\Users\\nexie\\Downloads");
-    fr3.setDirectory("C:\\Users\\nexie\\Downloads");
-    //fr.setDirectory(QDir::homePath());
-    //fr.setDirectory(QDir::homePath());
-    //"C:\Users\green\OneDrive\Рабочий стол"
-    fr.setColor(Qt::red);
-    fr.setOpacity(0.6);
-    fr.show();
-    fr2.show();
-    fr3.show();
-
-    //qDebug() << Q_FUNC_INFO;
-
-
-    return a.exec();
-
-    //return 0;
+    Gates::DesktopShellManager::instance().restoreNativeIcons();
+    return s_prevExceptionFilter ? s_prevExceptionFilter(ep) : EXCEPTION_CONTINUE_SEARCH;
 }
 
-// #endif
+int main(int argc, char * argv[])
+{
+    // Install crash guard before anything else
+    s_prevExceptionFilter = SetUnhandledExceptionFilter(gatesExceptionFilter);
+
+    QApplication app(argc, argv);
+    app.setApplicationName(QStringLiteral("Gates"));
+    app.setOrganizationName(QStringLiteral("Gates"));
+
+    // Always restore native icons on clean exit
+    QObject::connect(&app, &QApplication::aboutToQuit, []() {
+        Gates::DesktopShellManager::instance().restoreNativeIcons();
+    });
+
+    // ── Config ────────────────────────────────────────────────────────────────
+    auto & config = Gates::ConfigManager::instance();
+    const bool loaded = config.load();
+
+    if (!loaded && config.isFirstLaunch()) {
+        qDebug() << "[main] first launch — capturing native desktop icon positions";
+
+        // Capture positions before hiding so we can recreate the layout
+        Gates::DesktopShellManager::instance().captureIconPositionsToConfig();
+
+        // Create a default empty frame so the user has something to start with
+        Gates::FrameConfig defaultFrame;
+        defaultFrame.id   = Gates::ConfigManager::newFrameId();
+        defaultFrame.name = QStringLiteral("My Frame");
+        defaultFrame.x    = 80;
+        defaultFrame.y    = 80;
+        config.config().frames.append(defaultFrame);
+        config.save();
+    }
+
+    // ── Shell layer ───────────────────────────────────────────────────────────
+    Gates::DesktopShellManager::instance().hideNativeIcons();
+
+    // ── Desktop layer (VirtualDesktop + z-order management) ──────────────────
+    Gates::DesktopLayer::instance().init();
+
+    // ── Frame dispatcher ──────────────────────────────────────────────────────
+    Gates::FrameDispatcher dispatcher;
+    dispatcher.init();
+
+    return app.exec();
+}

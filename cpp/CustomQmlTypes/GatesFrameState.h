@@ -1,10 +1,13 @@
 #pragma once
 
 #include <QObject>
+#include <QQmlEngine>
 
 class GatesFrameState : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("GatesFrameState provides enums only")
 public:
     enum NameBarPosition
     {

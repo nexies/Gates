@@ -7,9 +7,15 @@ class DesktopService : public QObject
     Q_OBJECT
 
 public:
-    DesktopService(QObject * parent = nullptr);
+    explicit DesktopService(QObject * parent = nullptr);
 
 public slots:
-    void openLocalFile(const QString &path);
+    // Open any file/shortcut/CLSID path via Windows Shell
+    void shellOpen(const QString & path);
+
+    // Show the native Shell context menu at global screen coordinates
+    void showContextMenu(const QString & path, int screenX, int screenY);
+
+    void openLocalFile(const QString & path);
     void openUrl(const QUrl & url);
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QQmlEngine>
-#include <QQuickItem>
 #include <QQuickPaintedItem>
 #include <QtCore>
 

@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  tbot_base:
+    build:
+      dockerfile: docker/base/Dockerfile
+      context: ../
+    image: tbot_base
+    container_name: tbot_base_container
+
+  tbot_devel:
+    depends_on:
+      - tbot_base
+    build:
+      dockerfile: docker/devel/Dockerfile
+      context: ../
+    image: tbot_devel
+    ports:
+      - "2225:22"
+    container_name: tbot_devel_container
+
+  claude:
+    build:
+      context: ../../
+      dockerfile: docker/claude/Dockerfile
+    container_name: claude-code-nx
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+    volumes:
+      - ../:/workspace
+      - ${USERPROFILE}\.claude:/root/.claude
+      - ${USERPROFILE}\.claude.json:/root/.claude.json
+
+    environment:
+      HTTP_PROXY: http://host.docker.internal:${HOST_PROXY_PORT}
+      HTTPS_PROXY: http://host.docker.internal:${HOST_PROXY_PORT}
+      ALL_PROXY: ${ALL_PROXY_URL:-}
+
+      http_proxy: http://host.docker.internal:${HOST_PROXY_PORT}
+      https_proxy: http://host.docker.internal:${HOST_PROXY_PORT}
+      all_proxy: ${ALL_PROXY_URL:-}
+
+      NO_PROXY: localhost,127.0.0.1,host.docker.internal
+      no_proxy: localhost,127.0.0.1,host.docker.internal
+
+      TERM: xterm-256color
+
+    command: ["claude"]
