@@ -3,10 +3,14 @@
 #include "cpp/CustomQmlTypes/DragDropService.h"
 #include "QmlEngine.h"
 
+#include "cpp/Config/ConfigManager.h"
+
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QQmlComponent>
 #include <QTimer>
@@ -84,6 +88,8 @@ void FrameDispatcher::spawnFrame(const FrameConfig & cfg)
 
     connect(frame, &FrameForeign::geometryChanged,
             this,  &FrameDispatcher::onFrameGeometryChanged);
+    connect(frame, &FrameForeign::collapsedChanged,
+            this,  &FrameDispatcher::onFrameCollapsedChanged);
 
     _frames.insert(cfg.id, frame);
     frame->show();
@@ -137,6 +143,14 @@ void FrameDispatcher::onFrameGeometryChanged(QString id, int x, int y, int w, in
     _saveDebounce->start(); // coalesce rapid resize/move events into one save
 }
 
+void FrameDispatcher::onFrameCollapsedChanged(QString id, bool collapsed)
+{
+    auto * cfg = ConfigManager::instance().frameById(id);
+    if (!cfg || cfg->collapsed == collapsed) return;
+    cfg->collapsed = collapsed;
+    _saveDebounce->start();
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 FrameForeign * FrameDispatcher::frameById(const QString & id) const
@@ -176,7 +190,7 @@ QString FrameDispatcher::frameIdAtPos(const QPoint & globalPos) const
     return {};
 }
 
-void FrameDispatcher::onDropOnFrame(QString path, QString /*sourceFrameId*/, QString targetFrameId)
+void FrameDispatcher::onDropOnFrame(QString path, QString sourceFrameId, QString targetFrameId)
 {
     const auto * target = _frames.value(targetFrameId);
     if (!target) return;
@@ -192,12 +206,18 @@ void FrameDispatcher::onDropOnFrame(QString path, QString /*sourceFrameId*/, QSt
         return;
     }
 
-    if (!QFile::rename(path, targetPath))
+    if (!QFile::rename(path, targetPath)) {
         qWarning() << "[FrameDispatcher] failed to move" << path << "->" << targetPath;
-    // QFileSystemWatcher in DirEntryModel refreshes both source and target automatically
+        return;
+    }
+
+    // If the icon came from the desktop, remove it from the desktop icon config.
+    if (sourceFrameId.isEmpty())
+        ConfigManager::instance().removeDesktopIcon(path);
+    // QFileSystemWatcher in DirEntryModel refreshes the target frame automatically.
 }
 
-void FrameDispatcher::onDropOnDesktop(QString path, QString sourceFrameId, qreal /*x*/, qreal /*y*/)
+void FrameDispatcher::onDropOnDesktop(QString path, QString sourceFrameId, qreal x, qreal y)
 {
     if (sourceFrameId.isEmpty()) return; // desktop→desktop reposition: handled by VirtualDesktop
 
@@ -208,8 +228,33 @@ void FrameDispatcher::onDropOnDesktop(QString path, QString sourceFrameId, qreal
 
     if (path == targetPath) return;
 
-    if (!QFile::rename(path, targetPath))
+    if (!QFile::rename(path, targetPath)) {
         qWarning() << "[FrameDispatcher] failed to move" << path << "to desktop";
+        return;
+    }
+
+    // Snap drop coordinates to the desktop grid and register the new icon.
+    const auto & lay = ConfigManager::instance().config().desktopLayout;
+
+    QScreen * screen = nullptr;
+    for (QScreen * s : QGuiApplication::screens())
+        if (s->availableGeometry().contains((int)x, (int)y)) { screen = s; break; }
+    if (!screen)
+        screen = QGuiApplication::primaryScreen();
+
+    const QRect geom  = screen->availableGeometry();
+    const int localX  = (int)x - geom.x();
+    const int localY  = (int)y - geom.y();
+    const int maxCols = qMax(1, (geom.width()  - 2 * lay.margin) / lay.stepX());
+    const int maxRows = qMax(1, (geom.height() - 2 * lay.margin) / lay.stepY());
+    const int col     = qBound(0, (localX - lay.margin) / lay.stepX(), maxCols - 1);
+    const int row     = qBound(0, (localY - lay.margin) / lay.stepY(), maxRows - 1);
+
+    DesktopIconEntry entry;
+    entry.path = targetPath;
+    entry.x    = geom.x() + lay.margin + col * lay.stepX();
+    entry.y    = geom.y() + lay.margin + row * lay.stepY();
+    ConfigManager::instance().addDesktopIcon(entry);
 }
 
 } // namespace Gates

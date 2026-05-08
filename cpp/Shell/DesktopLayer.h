@@ -23,10 +23,8 @@ public:
     // Call once after QApplication and ConfigManager are ready.
     void init();
 
-    // Reload icon model (e.g. after config changes).
+    // Reload all per-screen icon models (e.g. after config changes).
     void reloadIcons();
-
-    DesktopIconModel * iconModel() const { return _iconModel; }
 
 private:
     explicit DesktopLayer(QObject * parent = nullptr);
@@ -34,8 +32,8 @@ private:
     void createWindowForScreen(QScreen * screen);
     void destroyWindowForScreen(QScreen * screen);
 
-    QHash<QScreen *, QQuickWindow *> _windows;
-    DesktopIconModel               * _iconModel = nullptr;
+    QHash<QScreen *, QQuickWindow *>     _windows;
+    QHash<QScreen *, DesktopIconModel *> _iconModels;
 
     static DesktopLayer * _instance;
 };

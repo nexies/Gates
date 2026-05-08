@@ -223,9 +223,6 @@ bool DesktopShellManager::captureIconPositionsToConfig()
     for (const auto & item : items) {
         const QString path = resolveDesktopPath(item.displayName);
         DesktopIconEntry entry;
-        // For virtual items we store the display name as a pseudo-path so
-        // we can at least record position; real path resolution can be
-        // extended later via IShellFolder.
         entry.path = path.isEmpty() ? (QStringLiteral("::virtual::") + item.displayName) : path;
         entry.x    = item.x;
         entry.y    = item.y;

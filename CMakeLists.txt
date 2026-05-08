@@ -52,6 +52,8 @@ add_executable(Gates main.cpp
         cpp/CustomQmlTypes/IconProvider.h
         cpp/CustomQmlTypes/DragDropService.cpp
         cpp/CustomQmlTypes/DragDropService.h
+        cpp/CustomQmlTypes/SelectionService.cpp
+        cpp/CustomQmlTypes/SelectionService.h
 
         cpp/FileSystem/FileSystemEntry.cpp
         cpp/FileSystem/FileSystemEntry.h
@@ -118,7 +120,7 @@ qt_add_qml_module(Gates
         qml/Frame.qml
         qml/FrameNameBar.qml
         qml/GatesFrame.qml
-        qml/GatesGridViewDelegate.qml
+        qml/IconDelegate.qml
         qml/IconGridView.qml
         qml/NameBarCustomButton.qml
         qml/testFrame.qml

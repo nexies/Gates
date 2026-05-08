@@ -33,6 +33,10 @@ public slots:
 signals:
     void geometryChanged(QString id, int x, int y, int w, int h);
     void visibilityChanged(QString id, bool visible);
+    void collapsedChanged(QString id, bool collapsed);
+
+private slots:
+    void onWindowMinimisedChanged();
 
 protected:
     QString getNameForDirectory(const QString & path);

@@ -2,6 +2,7 @@
 
 #include <QQmlComponent>
 #include <QQmlContext>
+#include <QQmlProperty>
 #include <QDir>
 #include <QDebug>
 #include <QStandardPaths>
@@ -63,12 +64,19 @@ void FrameForeign::applyConfig(const FrameConfig & cfg)
 
     _window->setPosition(cfg.x, cfg.y);
     _window->resize(cfg.width, cfg.height);
+    _window->setProperty("maximisedHeight", cfg.height);
     _window->setTitle(cfg.name);
     _window->setProperty("frameColor",   QColor(cfg.style.color));
     _window->setProperty("frameOpacity", cfg.style.opacity);
-    _window->setVisible(!cfg.collapsed);
+    _window->setVisible(true);
 
-    if (!cfg.icons.isEmpty())
+    // Restore collapsed state without animation (instant collapse on launch)
+    if (cfg.collapsed)
+        QMetaObject::invokeMethod(_window.get(), "minimiseInstant");
+
+    if (!cfg.dir.isEmpty())
+        setDirectory(cfg.dir);
+    else if (!cfg.icons.isEmpty())
         setDirectory(QFileInfo(cfg.icons.first().path).absolutePath());
     else if (_dirModel->currentDirPath().isEmpty())
         setDirectory(QDir::homePath());
@@ -76,10 +84,15 @@ void FrameForeign::applyConfig(const FrameConfig & cfg)
 
 void FrameForeign::connectWindowSignals()
 {
+    // Always emit the expanded height — if minimised, use maximisedHeight instead of
+    // the actual window height, so the config always stores the full size.
     auto emitGeometry = [this]() {
-        if (_window)
-            emit geometryChanged(_id, _window->x(), _window->y(),
-                                 _window->width(), _window->height());
+        if (!_window) return;
+        const bool minimised = _window->property("minimised").toBool();
+        const int  h         = minimised
+                             ? _window->property("maximisedHeight").toInt()
+                             : _window->height();
+        emit geometryChanged(_id, _window->x(), _window->y(), _window->width(), h);
     };
 
     connect(_window.get(), &QWindow::xChanged,      this, emitGeometry);
@@ -90,6 +103,21 @@ void FrameForeign::connectWindowSignals()
     connect(_window.get(), &QWindow::visibleChanged, this, [this](bool v) {
         emit visibilityChanged(_id, v);
     });
+
+    // Track minimised property changes so we can persist collapsed state to config
+    QQmlProperty minimisedProp(_window.get(), QStringLiteral("minimised"));
+    if (minimisedProp.isValid()) {
+        const int slotIdx = metaObject()->indexOfSlot("onWindowMinimisedChanged()");
+        minimisedProp.connectNotifySignal(this, slotIdx);
+    } else {
+        qWarning() << "[FrameForeign] could not connect to minimised property for" << _id;
+    }
+}
+
+void FrameForeign::onWindowMinimisedChanged()
+{
+    if (!_window) return;
+    emit collapsedChanged(_id, _window->property("minimised").toBool());
 }
 
 void FrameForeign::show()    { setVisible(true);  }

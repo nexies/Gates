@@ -45,6 +45,7 @@ protected:
     void mouseMoveEvent(QMouseEvent * ev) override;
     void mousePressEvent(QMouseEvent * ev) override;
     void resizeEvent(QResizeEvent * ev) override;
+    bool nativeEvent(const QByteArray & eventType, void * message, qintptr * result) override;
 
 private:
     bool _blurBehind { false };

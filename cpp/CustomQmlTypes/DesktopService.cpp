@@ -1,6 +1,8 @@
 #include "DesktopService.h"
 
 #include <QDesktopServices>
+#include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QUrl>
 #include <QDir>
@@ -59,6 +61,19 @@ void DesktopService::showContextMenu(const QString & path, int screenX, int scre
 
     Gates::ShellContextMenu::instance().show(path, {screenX, screenY}, parentHwnd);
 #endif
+}
+
+bool DesktopService::renameFile(const QString & oldPath, const QString & newName)
+{
+    const QString trimmed = newName.trimmed();
+    if (trimmed.isEmpty()) return false;
+    const QString newPath = QFileInfo(oldPath).dir().absoluteFilePath(trimmed);
+    if (newPath == oldPath) return true;
+    if (!QFile::rename(oldPath, newPath)) {
+        qWarning() << "[DesktopService] rename failed:" << oldPath << "->" << newPath;
+        return false;
+    }
+    return true;
 }
 
 void DesktopService::openLocalFile(const QString & path)

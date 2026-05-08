@@ -1,130 +1,203 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Window
 import Gates
 
 ResizableFramelessWindow {
-    property string name: "GatesFrame"
     id: frameWindow
-    title: qsTr("Gates Frame")
-    visible: true
-    color: "transparent"
 
-    width: 600
-    height: 500
+    title:   qsTr("Gates Frame")
+    visible: true
+    color:   "transparent"
+
+    width:         600
+    height:        500
     minimumHeight: namebar.height + 100
-    minimumWidth: 100
-    property int maximisedHeight: 500
+    minimumWidth:  140  // one icon column (100) + grid side margins (20+20)
 
     blurBehind: true
 
     resizeSnapToGrid: true
-    sizeIncrement: Qt.size(100, 100)
-    baseSize: Qt.size(100, 100)
+    sizeIncrement: Qt.size(100, 0)  // snap width to icon-column steps; 0 = free height
+    baseSize:      Qt.size(140, 0)  // one column + left/right grid margins
 
-    property int nameBarPosition: GatesFrameState.NameBarOnBottom
-    property int dockedState: GatesFrameState.NotDocked
+    // ── State ─────────────────────────────────────────────────────────────────
+    property int  nameBarPosition: GatesFrameState.NameBarOnTop
+    property int  dockedState:     GatesFrameState.NotDocked
+    property bool minimised:       false
+    property int  maximisedHeight: 500
+
+    // ── Style ─────────────────────────────────────────────────────────────────
     property alias frameColor: backgroundSettings.color
-    property bool minimised: false
+    // frameOpacity is stored but applied separately; aliasing it directly to
+    // backgroundSettings.opacity would make nameBarBackground fully opaque at
+    // typical config values (0.72 + 0.3 > 1.0).
+    property double frameOpacity: 0.2
 
-    SequentialAnimation
-    {
+    QtObject {
+        id: backgroundSettings
+        property color  color:   "#1a1a2e"
+        property int    radius:  0
+        property double opacity: frameWindow.frameOpacity
+    }
+
+    // ── Collapse / expand animations ──────────────────────────────────────────
+    // For bottom-docked frames the bottom edge must stay fixed: animate y and
+    // height in parallel so that y + height = screen-bottom throughout.
+
+    SequentialAnimation {
         id: minimiseAnimation
-
         PropertyAction { target: frameWindow; property: "minimumHeight"; value: namebar.height }
-
-        NumberAnimation {
-            target: frameWindow
-            property: "height"
-            duration: 200
-            easing.type: Easing.InOutQuad
-            to: namebar.height - 1
+        ScriptAction {
+            script: {
+                collapseYAnim.to = (frameWindow.dockedState === GatesFrameState.DockedOnBottom)
+                    ? Screen.virtualY + Screen.desktopAvailableHeight - namebar.height
+                    : frameWindow.y
+            }
+        }
+        ParallelAnimation {
+            NumberAnimation {
+                target: frameWindow; property: "height"
+                duration: 200; easing.type: Easing.InOutQuad; to: namebar.height
+            }
+            NumberAnimation {
+                id: collapseYAnim
+                target: frameWindow; property: "y"
+                duration: 200; easing.type: Easing.InOutQuad; to: 0
+            }
         }
     }
 
-    SequentialAnimation
-    {
+    SequentialAnimation {
         id: maximiseAnimation
-
-        NumberAnimation {
-            target: frameWindow
-            property: "height"
-            duration: 200
-            easing.type: Easing.InOutQuad
-            to: maximisedHeight
+        ScriptAction {
+            script: {
+                expandYAnim.to = (frameWindow.dockedState === GatesFrameState.DockedOnBottom)
+                    ? Screen.virtualY + Screen.desktopAvailableHeight - frameWindow.maximisedHeight
+                    : frameWindow.y
+            }
         }
-
+        ParallelAnimation {
+            NumberAnimation {
+                target: frameWindow; property: "height"
+                duration: 200; easing.type: Easing.InOutQuad; to: maximisedHeight
+            }
+            NumberAnimation {
+                id: expandYAnim
+                target: frameWindow; property: "y"
+                duration: 200; easing.type: Easing.InOutQuad; to: 0
+            }
+        }
         PropertyAction { target: frameWindow; property: "minimumHeight"; value: namebar.height + 100 }
     }
 
-    function minimise(min = true)
-    {
-        if(!min)
-            maximise(min)
-
-        maximisedHeight = height;
-        minimised = true;
+    function minimise() {
+        maximisedHeight = height
+        minimised = true
         minimiseAnimation.start()
     }
 
-    function maximise(max = true)
-    {
-        if(!max)
-            minimise(max)
-        minimised = false;
+    function maximise() {
+        minimised = false
         maximiseAnimation.start()
     }
 
-
-    QtObject
-    {
-        id: backgroundSettings
-        property color color: "blue"
-        property int radius: 0
-        property double opacity: 0.2
+    // Instant collapse — used when restoring collapsed state from config (no animation on launch)
+    function minimiseInstant() {
+        maximisedHeight = height
+        minimised       = true
+        minimumHeight   = namebar.height
+        height          = namebar.height
+        if (dockedState === GatesFrameState.DockedOnBottom)
+            y = Screen.virtualY + Screen.desktopAvailableHeight - namebar.height
     }
 
-    RoundedRect
-    {
-        id: iconViewBackground
-        antialiasing: true
+    // ── Dock-to-edge detection (runs after each window drag) ──────────────────
+    readonly property int _dockThreshold: 20
 
+    function checkAndDock() {
+        const sTop    = Screen.virtualY
+        const sBottom = Screen.virtualY + Screen.desktopAvailableHeight
+
+        if (frameWindow.y <= sTop + _dockThreshold) {
+            dockedState     = GatesFrameState.DockedOnTop
+            nameBarPosition = GatesFrameState.NameBarOnBottom
+            frameWindow.y   = sTop
+            minimise()
+        } else if (frameWindow.y + frameWindow.height >= sBottom - _dockThreshold) {
+            dockedState     = GatesFrameState.DockedOnBottom
+            nameBarPosition = GatesFrameState.NameBarOnTop
+            minimise()
+        }
+    }
+
+    // ── Auto-expand / collapse on hover when docked ───────────────────────────
+    HoverHandler { id: windowHover }
+
+    // Collapse after hover leaves, but not while the frame has OS focus
+    // (i.e., the user has clicked something inside and it's still active).
+    Timer {
+        id: collapseTimer
+        interval: 1000
+        repeat:   false
+        onTriggered: {
+            if (dockedState === GatesFrameState.NotDocked || minimised) return
+            if (frameWindow.active) {
+                collapseTimer.restart()  // frame is focused; keep open and recheck later
+            } else {
+                minimise()
+            }
+        }
+    }
+
+    Connections {
+        target: windowHover
+        function onHoveredChanged() {
+            if (dockedState === GatesFrameState.NotDocked) return
+            if (windowHover.hovered) {
+                collapseTimer.stop()
+                if (minimised) maximise()
+            } else {
+                if (!minimised) collapseTimer.restart()
+            }
+        }
+    }
+
+    // ── Visuals ───────────────────────────────────────────────────────────────
+    RoundedRect {
+        id: iconViewBackground
         anchors.fill: parent
-        color: "blue"
-        radius: backgroundSettings.radius
+        antialiasing: true
+        color:   backgroundSettings.color
+        radius:  backgroundSettings.radius
         opacity: backgroundSettings.opacity
         roundedCorners: {
-            if(frameWindow.dockedState == GatesFrameState.NotDocked)
-                return RoundedRect.AllCorners
-            else if(frameWindow.dockedState == GatesFrameState.DockedOnBottom)
-                return RoundedRect.TopCorners
-            else if(frameWindow.dockedState == GatesFrameState.DockedOnTop)
-                return RoundedRect.BottomCorners
-            else
-                return RoundedRect.NoCorners
+            switch (frameWindow.dockedState) {
+            case GatesFrameState.DockedOnTop:    return RoundedRect.BottomCorners
+            case GatesFrameState.DockedOnBottom: return RoundedRect.TopCorners
+            default:                             return RoundedRect.AllCorners
+            }
         }
     }
-    RoundedRect
-    {
+
+    RoundedRect {
         id: nameBarBackground
-        radius: backgroundSettings.radius
-
         anchors.fill: namebar
-        color: "black"
-        opacity: backgroundSettings.opacity + 0.3
+        radius:  backgroundSettings.radius
+        color:   "black"
+        opacity: Math.min(1.0, backgroundSettings.opacity)
         roundedCorners: {
-            if(frameWindow.minimised)
+            if (frameWindow.minimised)
                 return RoundedRect.AllCorners
-
-            if(frameWindow.nameBarPosition === GatesFrameState.NameBarOnTop)
-                return RoundedRect.TopCorners
-            if(frameWindow.nameBarPosition === GatesFrameState.NameBarOnBottom)
-                return RoundedRect.BottomCorners
-            else
-                return RoundedRect.AllCorners
+            switch (frameWindow.nameBarPosition) {
+            case GatesFrameState.NameBarOnTop:    return RoundedRect.TopCorners
+            case GatesFrameState.NameBarOnBottom: return RoundedRect.BottomCorners
+            default:                              return RoundedRect.AllCorners
+            }
         }
     }
 
-    // Drop target highlight — appears when another icon is dragged over this frame
+    // Drop target highlight
     Rectangle {
         anchors.fill: parent
         color:   "white"
@@ -136,60 +209,47 @@ ResizableFramelessWindow {
         Behavior on opacity { NumberAnimation { duration: 120 } }
     }
 
-    Item
-    {
+    // ── Icon grid ─────────────────────────────────────────────────────────────
+    // Use y/height instead of anchors to avoid a one-frame glitch where both
+    // top and bottom anchors are briefly set simultaneously during transitions.
+    Item {
         id: iconView
-        width: parent.width
-        visible: true
-        // anchors.top: {
-        //     if (frameWindow.nameBarPosition == GatesFrameState.NameBarOnTop) {
-        //         console.log("Icon view top = namebar.bottom")
-        //         return namebar.bottom;
-        //     }
-        //     if (frameWindow.nameBarPosition == GatesFrameState.NameBarOnBottom) {
-        //         console.log("Icon view top = parent.top")
-        //         return parent.top;
-        //     }
-        //     console.log("Icon view top = unknown")
-        // }
-
-        // anchors.bottom: {
-        //     if (frameWindow.nameBarPosition == GatesFrameState.NameBarOnTop)
-        //         return parent.bottom;
-        //     if (frameWindow.nameBarPosition == GatesFrameState.NameBarOnBottom)
-        //         return namebar.top;
-        // }
-
-        anchors.top: namebar.bottom
-        anchors.bottom: parent.bottom
-
+        width:  parent.width
+        y:      nameBarPosition === GatesFrameState.NameBarOnTop ? namebar.height : 0
+        height: parent.height - namebar.height
 
         IconGridView {
             id: grid
             anchors.fill: parent
             model: my_fileModel
         }
-
     }
 
-
-    FrameNameBar
-    {
-        x: 0
-        y: 0
-        text: frameWindow.title
+    // ── Name bar ──────────────────────────────────────────────────────────────
+    FrameNameBar {
         id: namebar
-        anchors.top: frameWindow.top
-        anchors.horizontalCenter: frameWindow.horizontalCenter
-        frameMinimised: frameWindow.minimised
+        width:  parent.width
+        height: 40
+        anchors.top: parent.top  // default: namebar on top
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        states: State {
+            name: "onBottom"
+            when: nameBarPosition === GatesFrameState.NameBarOnBottom
+            AnchorChanges {
+                target: namebar
+                anchors.top:    undefined
+                anchors.bottom: namebar.parent.bottom
+            }
+        }
+
+        text:            frameWindow.title
+        frameMinimised:  frameWindow.minimised
+        nameBarPosition: frameWindow.nameBarPosition
 
         onMinimiseButtonTriggered: {
-            if(frameWindow.minimised)
-                maximise()
-            else
-                minimise()
-            nameBarBackground.update()
-
+            if (minimised) maximise()
+            else           minimise()
         }
 
         onOptionsButtonTriggered: {
@@ -198,19 +258,28 @@ ResizableFramelessWindow {
 
         DragHandler {
             target: frameWindow
-            grabPermissions:  PointerHandler.CanTakeOverFromItems | PointerHandler.CanTakeOverFromHandlersOfDifferentType | PointerHandler.ApprovesTakeOverByAnything
+            grabPermissions: PointerHandler.CanTakeOverFromItems |
+                             PointerHandler.CanTakeOverFromHandlersOfDifferentType |
+                             PointerHandler.ApprovesTakeOverByAnything
             dragThreshold: 0
             onActiveChanged: {
-                if(active) startSystemMove();
-                else
-                {
-                    namebar.x = 0;
-                    namebar.y = 0;
+                if (active) {
+                    // Undock and restore to full size before allowing drag
+                    if (dockedState !== GatesFrameState.NotDocked) {
+                        collapseTimer.stop()
+                        if (dockedState === GatesFrameState.DockedOnBottom)
+                            frameWindow.y = Screen.virtualY + Screen.desktopAvailableHeight - maximisedHeight
+                        dockedState     = GatesFrameState.NotDocked
+                        nameBarPosition = GatesFrameState.NameBarOnTop
+                        minimised       = false
+                        minimumHeight   = namebar.height + 100
+                        height          = maximisedHeight
+                    }
+                    startSystemMove()
+                } else {
+                    checkAndDock()
                 }
             }
         }
-
     }
-
-
 }

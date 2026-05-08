@@ -33,6 +33,7 @@ private slots:
     void onFrameAdded(Gates::FrameConfig cfg);
     void onFrameRemoved(QString id);
     void onFrameGeometryChanged(QString id, int x, int y, int w, int h);
+    void onFrameCollapsedChanged(QString id, bool collapsed);
     void onDropOnFrame(QString path, QString sourceFrameId, QString targetFrameId);
     void onDropOnDesktop(QString path, QString sourceFrameId, qreal x, qreal y);
 

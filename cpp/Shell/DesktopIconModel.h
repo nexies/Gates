@@ -2,7 +2,10 @@
 
 #include <QAbstractListModel>
 #include <QQmlEngine>
+#include <QVector>
 #include "cpp/Config/ConfigManager.h"
+
+class QScreen;
 
 namespace Gates {
 
@@ -20,7 +23,7 @@ public:
     };
     Q_ENUM(Role)
 
-    explicit DesktopIconModel(QObject * parent = nullptr);
+    explicit DesktopIconModel(QScreen * screen, QObject * parent = nullptr);
 
     void reload();
 
@@ -32,7 +35,9 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 private:
-    QList<DesktopIconEntry> _icons;
+    QScreen *               _screen;
+    QList<DesktopIconEntry> _icons;        // local (screen-relative) coordinates
+    QVector<int>            _configIndex;  // maps model row → config desktopIcons index
 };
 
 } // namespace Gates

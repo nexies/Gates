@@ -26,6 +26,7 @@ struct FrameStyle {
 struct FrameConfig {
     QString          id;
     QString          name;
+    QString          dir;     // explicit directory path; empty = derive from icons
     QString          monitor;
     int              x           = 100;
     int              y           = 100;
@@ -43,10 +44,27 @@ struct DesktopIconEntry {
     int     y = 0;
 };
 
+// ── Desktop icon grid layout ─────────────────────────────────────────────────
+// TODO: expose to QML (Q_GADGET or context property) and add a settings UI so
+//       the user can adjust cell size, gaps and margins per monitor.
+//       Serialised under [desktop.layout] in config.toml.
+struct DesktopLayoutConfig {
+    int cellW  = 90;   // icon delegate width  (px)
+    int cellH  = 100;  // icon delegate height (px)
+    int gapX   = 6;    // horizontal gap between cells (px)
+    int gapY   = 6;    // vertical   gap between cells (px)
+    int margin = 10;   // padding from all screen edges (px)
+
+    // Derived helpers — keep QML stepX/stepY in sync when changing these.
+    int stepX() const { return cellW + gapX; }
+    int stepY() const { return cellH + gapY; }
+};
+
 struct AppConfig {
     bool                    autostart      = false;
     QString                 blurPreference = QStringLiteral("auto");
-    QList<DesktopIconEntry> desktopIcons;
+    DesktopLayoutConfig     desktopLayout;
+    QList<DesktopIconEntry> desktopIcons;   // global screen coordinates
     QList<FrameConfig>      frames;
 };
 
@@ -73,6 +91,9 @@ public:
 
     FrameConfig * frameById(const QString & id);
 
+    void addDesktopIcon(const DesktopIconEntry & entry);
+    void removeDesktopIcon(const QString & path);
+
     static QString newFrameId();
 
 signals:
@@ -88,7 +109,7 @@ private:
 
     AppConfig           _config;
     QFileSystemWatcher *_watcher          = nullptr;
-    bool                _ignoreNextChange = false;
+    int                 _ignoreChanges    = 0;    // suppress N file-watcher events after save
     bool                _firstLaunch      = false;
 
     static ConfigManager * _instance;

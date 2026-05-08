@@ -27,8 +27,6 @@ DesktopLayer::DesktopLayer(QObject * parent) : QObject(parent) {}
 
 void DesktopLayer::init()
 {
-    _iconModel = new DesktopIconModel(this);
-
     // Connect to ConfigManager so we reload when icons change
     connect(&ConfigManager::instance(), &ConfigManager::configChanged,
             this, &DesktopLayer::reloadIcons);
@@ -47,6 +45,9 @@ void DesktopLayer::createWindowForScreen(QScreen * screen)
     if (_windows.contains(screen))
         return;
 
+    auto * iconModel = new DesktopIconModel(screen, this);
+    _iconModels.insert(screen, iconModel);
+
     QQmlComponent component(
         &QmlEngine::instance(),
         QUrl(QStringLiteral("qrc:/qt/qml/Gates/qml/VirtualDesktop.qml")));
@@ -59,7 +60,7 @@ void DesktopLayer::createWindowForScreen(QScreen * screen)
     }
 
     auto * ctx = new QQmlContext(&QmlEngine::instance(), this);
-    ctx->setContextProperty("desktopIconModel", _iconModel);
+    ctx->setContextProperty("desktopIconModel", iconModel);
     ctx->setContextProperty("targetScreen", screen);
 
     auto * window = qobject_cast<QQuickWindow *>(component.create(ctx));
@@ -70,7 +71,7 @@ void DesktopLayer::createWindowForScreen(QScreen * screen)
 
     // Position on the correct screen before applying Win32 styles
     window->setScreen(screen);
-    window->setGeometry(screen->geometry());
+    window->setGeometry(screen->availableGeometry());
 
     // Keep Qt's focus system away from this window (Win32 WS_EX_NOACTIVATE alone
     // is not enough — Qt routes QFocusEvent internally without checking it)
@@ -78,6 +79,11 @@ void DesktopLayer::createWindowForScreen(QScreen * screen)
 
     // Apply HWND_BOTTOM + WS_EX_TOOLWINDOW + WS_EX_NOACTIVATE
     WindowHelper::makeDesktopWindow(window, /*noActivate=*/true);
+
+    // Resize when taskbar moves or changes height
+    connect(screen, &QScreen::availableGeometryChanged, window, [window](const QRect & geom) {
+        window->setGeometry(geom);
+    });
 
     // Clean up when screen is removed
     connect(window, &QQuickWindow::destroyed, this, [this, screen]() {
@@ -97,12 +103,14 @@ void DesktopLayer::destroyWindowForScreen(QScreen * screen)
         window->deleteLater();
         qDebug() << "[DesktopLayer] destroyed window for screen" << screen->name();
     }
+    if (auto * model = _iconModels.take(screen))
+        model->deleteLater();
 }
 
 void DesktopLayer::reloadIcons()
 {
-    if (_iconModel)
-        _iconModel->reload();
+    for (auto * model : std::as_const(_iconModels))
+        model->reload();
 }
 
 } // namespace Gates

@@ -45,6 +45,7 @@ static Gates::FrameConfig parseFrameConfig(const toml::table & t)
     Gates::FrameConfig f;
     f.id         = QString::fromStdString(t["id"].value_or(std::string{}));
     f.name       = QString::fromStdString(t["name"].value_or(std::string{"Frame"}));
+    f.dir        = QString::fromStdString(t["dir"].value_or(std::string{}));
     f.monitor    = QString::fromStdString(t["monitor"].value_or(std::string{}));
     f.x          = (int)t["x"].value_or(100);
     f.y          = (int)t["y"].value_or(100);
@@ -103,6 +104,7 @@ static toml::table serializeFrame(const Gates::FrameConfig & f)
     return toml::table{
         { "id",          f.id.toStdString()         },
         { "name",        f.name.toStdString()        },
+        { "dir",         f.dir.toStdString()         },
         { "monitor",     f.monitor.toStdString()     },
         { "x",           f.x                         },
         { "y",           f.y                         },
@@ -139,8 +141,8 @@ ConfigManager::ConfigManager(QObject * parent) : QObject(parent)
         if (!_watcher->files().contains(path))
             _watcher->addPath(path);
 
-        if (_ignoreNextChange) {
-            _ignoreNextChange = false;
+        if (_ignoreChanges > 0) {
+            --_ignoreChanges;
             return;
         }
 
@@ -240,11 +242,11 @@ bool ConfigManager::save()
     oss << root;
     const std::string serialized = oss.str();
 
-    _ignoreNextChange = true;
+    _ignoreChanges = 3;  // some OS fire 2–3 events per write; suppress all of them
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        _ignoreNextChange = false;
+        _ignoreChanges = 0;
         qCritical() << "[ConfigManager] cannot write config file:" << path;
         return false;
     }
@@ -294,6 +296,25 @@ FrameConfig * ConfigManager::frameById(const QString & id)
         if (f.id == id)
             return &f;
     return nullptr;
+}
+
+void ConfigManager::addDesktopIcon(const DesktopIconEntry & entry)
+{
+    _config.desktopIcons.append(entry);
+    save();
+    emit configChanged();
+}
+
+void ConfigManager::removeDesktopIcon(const QString & path)
+{
+    const int before = _config.desktopIcons.size();
+    _config.desktopIcons.removeIf([&path](const DesktopIconEntry & e) {
+        return e.path == path;
+    });
+    if (_config.desktopIcons.size() != before) {
+        save();
+        emit configChanged();
+    }
 }
 
 QString ConfigManager::newFrameId()

@@ -3,6 +3,11 @@
 #include "cpp/utilities/BlurBehindHelper/BlurBehindHelper.h"
 #include <QResizeEvent>
 
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+
 ResizableFramelessWindow::ResizableFramelessWindow(QWindow *parent) :
     QQuickWindow(parent)
 {
@@ -132,6 +137,35 @@ int ResizableFramelessWindow::maximisedHeight() const
 void ResizableFramelessWindow::setMaximisedHeight(int newMaximisedHeight)
 {
     m_maximisedHeight = newMaximisedHeight;
+}
+
+bool ResizableFramelessWindow::nativeEvent(const QByteArray & eventType,
+                                           void * message, qintptr * result)
+{
+    if (m_resizeSnapToGrid && eventType == "windows_generic_MSG") {
+        const auto * msg = static_cast<MSG *>(message);
+        if (msg->message == WM_SIZING) {
+            auto * rc = reinterpret_cast<RECT *>(msg->lParam);
+            const QSize inc  = sizeIncrement();
+            const QSize base = baseSize();
+
+            if (inc.width() > 0 && base.width() > 0) {
+                const int w    = rc->right - rc->left;
+                const int cols = qMax(1, qRound(float(w - base.width()) / inc.width()));
+                const int snapped = base.width() + cols * inc.width();
+
+                const WPARAM edge = msg->wParam;
+                if (edge == WMSZ_LEFT || edge == WMSZ_TOPLEFT || edge == WMSZ_BOTTOMLEFT)
+                    rc->left = rc->right - snapped;
+                else
+                    rc->right = rc->left + snapped;
+            }
+
+            *result = TRUE;
+            return true;
+        }
+    }
+    return QQuickWindow::nativeEvent(eventType, message, result);
 }
 
 bool ResizableFramelessWindow::resizeSnapToGrid() const

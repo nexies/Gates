@@ -8,11 +8,10 @@ Item {
     width: parent.width
     height: 40
     property alias text: nameLabel.text
-    property bool frameMinimised: false
+    property bool frameMinimised:  false
+    property int  nameBarPosition: GatesFrameState.NameBarOnTop
 
     id: viewport
-
-    anchors.horizontalCenter: parent.horizontalCenter
 
     Text
     {
@@ -61,7 +60,13 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.rightMargin: (parent.height - height) / 2
 
-        property int rotationAngle: frameMinimised ? -90 : 90
+        // NameBarOnBottom (docked to top): chevron points up when expanded, down when collapsed
+        // NameBarOnTop (default):          chevron points down when expanded, up when collapsed
+        property int rotationAngle: {
+            const onBottom = nameBarPosition === GatesFrameState.NameBarOnBottom
+            if (frameMinimised) return onBottom ?  90 : -90
+            else                return onBottom ? -90 :  90
+        }
         Behavior on rotationAngle { NumberAnimation {easing.type: Easing.InOutQuad; duration: 200}}
 
         transform: Rotation
