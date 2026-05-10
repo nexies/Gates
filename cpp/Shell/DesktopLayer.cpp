@@ -27,10 +27,6 @@ DesktopLayer::DesktopLayer(QObject * parent) : QObject(parent) {}
 
 void DesktopLayer::init()
 {
-    // Connect to ConfigManager so we reload when icons change
-    connect(&ConfigManager::instance(), &ConfigManager::configChanged,
-            this, &DesktopLayer::reloadIcons);
-
     // Create a window for each screen
     for (QScreen * screen : QGuiApplication::screens())
         createWindowForScreen(screen);

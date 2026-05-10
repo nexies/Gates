@@ -12,6 +12,7 @@ qt_find(
         COMPONENTS Core Gui Widgets Qml Quick QuickWidgets
         REQUIRED
         PLATFORM mingw 64
+        PLATFORM_EXCLUDE llvm
 #        PATH "D:\\Qt2"
 )
 
@@ -40,6 +41,9 @@ add_executable(Gates main.cpp
 
         cpp/Shell/DesktopIconModel.cpp
         cpp/Shell/DesktopIconModel.h
+
+        cpp/Shell/DesktopFolderLocator.cpp
+        cpp/Shell/DesktopFolderLocator.h
 
         cpp/Shell/ShellContextMenu.cpp
         cpp/Shell/ShellContextMenu.h
@@ -94,12 +98,20 @@ add_executable(Gates main.cpp
         cpp/Custom/qsettings_toml.hpp
 )
 
+message(STATUS "QT_FIND_TARGETS: ${QT_FIND_TARGETS}")
+
 target_link_libraries(Gates PRIVATE
         ${QT_FIND_TARGETS}
         shlwapi     # ILClone, ILRemoveLastID, SHParseDisplayName
         comctl32    # SetWindowSubclass / DefSubclassProc
         ole32       # CoCreateInstance (IExplorerBrowser)
 )
+
+#qt_windeploy(Gates
+#        QML
+#        VERBOSE
+#)
+
 
 # Must be before qt_add_qml_module so qmltyperegistrar can find the headers
 target_include_directories(Gates PRIVATE
@@ -150,4 +162,3 @@ if(TARGET spdlog::spdlog)
     target_compile_definitions(Gates PRIVATE GATES_USE_SPDLOG=1)
 endif()
 
-qt_windeploy(Gates QML)

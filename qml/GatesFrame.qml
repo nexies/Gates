@@ -32,11 +32,11 @@ ResizableFramelessWindow {
     // frameOpacity is stored but applied separately; aliasing it directly to
     // backgroundSettings.opacity would make nameBarBackground fully opaque at
     // typical config values (0.72 + 0.3 > 1.0).
-    property double frameOpacity: 0.2
+    property double frameOpacity: 0.1
 
     QtObject {
         id: backgroundSettings
-        property color  color:   "#1a1a2e"
+        property color  color:   Qt.color("blue")
         property int    radius:  0
         property double opacity: frameWindow.frameOpacity
     }
@@ -134,19 +134,19 @@ ResizableFramelessWindow {
     // ── Auto-expand / collapse on hover when docked ───────────────────────────
     HoverHandler { id: windowHover }
 
-    // Collapse after hover leaves, but not while the frame has OS focus
-    // (i.e., the user has clicked something inside and it's still active).
     Timer {
         id: collapseTimer
-        interval: 1000
+        interval: 300
         repeat:   false
         onTriggered: {
             if (dockedState === GatesFrameState.NotDocked || minimised) return
-            if (frameWindow.active) {
-                collapseTimer.restart()  // frame is focused; keep open and recheck later
-            } else {
-                minimise()
+            // Don't collapse while an icon inside this frame is selected.
+            const sp = selectionService.selectedPath
+            if (sp && (sp.startsWith(frameDirPath + "/") || sp.startsWith(frameDirPath + "\\"))) {
+                collapseTimer.restart()
+                return
             }
+            minimise()
         }
     }
 
@@ -264,6 +264,15 @@ ResizableFramelessWindow {
             dragThreshold: 0
             onActiveChanged: {
                 if (active) {
+                    // Skip move if the press landed in the OS resize-edge zone
+                    // (ResizableFramelessWindow._edgeOffset = 5 px from each edge).
+                    const e  = 5
+                    const pp = centroid.pressPosition
+                    const inResize = pp.x < e || pp.x > namebar.width - e
+                                  || (nameBarPosition === GatesFrameState.NameBarOnTop    && pp.y < e)
+                                  || (nameBarPosition === GatesFrameState.NameBarOnBottom && pp.y > namebar.height - e)
+                    if (inResize) return
+
                     // Undock and restore to full size before allowing drag
                     if (dockedState !== GatesFrameState.NotDocked) {
                         collapseTimer.stop()

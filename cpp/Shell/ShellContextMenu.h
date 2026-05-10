@@ -27,6 +27,9 @@ public:
     // parentHwnd — owner window (used for menu message routing)
     void show(const QString & path, QPoint screenPos, HWND parentHwnd);
 
+    // Show the Windows desktop background context menu (right-click on empty desktop).
+    void showBackground(QPoint screenPos, HWND parentHwnd);
+
 private:
     explicit ShellContextMenu(QObject * parent = nullptr);
 

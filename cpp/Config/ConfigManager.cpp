@@ -12,15 +12,6 @@
 
 // ── Parsing helpers ──────────────────────────────────────────────────────────
 
-static Gates::IconEntry parseIconEntry(const toml::table & t)
-{
-    return {
-        QString::fromStdString(t["path"].value_or(std::string{})),
-        (int)t["row"].value_or(0),
-        (int)t["col"].value_or(0)
-    };
-}
-
 static Gates::DesktopIconEntry parseDesktopIconEntry(const toml::table & t)
 {
     return {
@@ -57,11 +48,6 @@ static Gates::FrameConfig parseFrameConfig(const toml::table & t)
     if (const auto * style = t["style"].as_table())
         f.style = parseFrameStyle(*style);
 
-    if (const auto * icons = t["icons"].as_array()) {
-        for (const auto & item : *icons)
-            if (const auto * iconTable = item.as_table())
-                f.icons.append(parseIconEntry(*iconTable));
-    }
     return f;
 }
 
@@ -77,15 +63,6 @@ static toml::table serializeStyle(const Gates::FrameStyle & s)
     };
 }
 
-static toml::table serializeIconEntry(const Gates::IconEntry & e)
-{
-    return toml::table{
-        { "path", e.path.toStdString() },
-        { "row",  e.row                },
-        { "col",  e.col                }
-    };
-}
-
 static toml::table serializeDesktopIcon(const Gates::DesktopIconEntry & e)
 {
     return toml::table{
@@ -97,10 +74,6 @@ static toml::table serializeDesktopIcon(const Gates::DesktopIconEntry & e)
 
 static toml::table serializeFrame(const Gates::FrameConfig & f)
 {
-    toml::array icons;
-    for (const auto & icon : f.icons)
-        icons.push_back(serializeIconEntry(icon));
-
     return toml::table{
         { "id",          f.id.toStdString()         },
         { "name",        f.name.toStdString()        },
@@ -113,7 +86,6 @@ static toml::table serializeFrame(const Gates::FrameConfig & f)
         { "collapsed",   f.collapsed                 },
         { "docked_edge", f.dockedEdge.toStdString()  },
         { "style",       serializeStyle(f.style)     },
-        { "icons",       std::move(icons)            }
     };
 }
 

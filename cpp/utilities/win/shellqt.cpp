@@ -3,6 +3,8 @@
 #include <Shlobj.h>
 #include <commoncontrols.h>
 #include <dwmapi.h>
+#include <objbase.h>   // CoInitializeEx / CoUninitialize / CoCreateInstance
+#include <shobjidl.h>  // IShellLinkW, IPersistFile
 
 // SHIL_ constants are defined in <commoncontrols.h> on recent SDK versions.
 // Define fallbacks in case the SDK is older.
@@ -24,8 +26,11 @@
 
 #include <QDir>
 #include <QDebug>
+#include <QFileInfo>
+#include <QImageReader>
 #include <QPixmap>
 #include <QImage>
+#include <QScopeGuard>
 
 void EnableBlurBehind() {}
 
@@ -188,4 +193,67 @@ QIcon extractIcons(const QString & sourceFile)
     }
 
     return result;
+}
+
+// ── Shortcut icon resolution (IShellLink) ─────────────────────────────────────
+
+QIcon extractShortcutIcon(const QString & lnkPath)
+{
+    // COM may or may not be initialised on this thread already.
+    // S_OK   → we initialised it, so uninitialise on exit.
+    // S_FALSE → already initialised, leave it alone.
+    const HRESULT comHr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    auto comGuard = qScopeGuard([comHr] {
+        if (comHr == S_OK) CoUninitialize();
+    });
+
+    IShellLinkW * sl = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_IShellLinkW, reinterpret_cast<void **>(&sl))))
+        return {};
+
+    IPersistFile * pf = nullptr;
+    sl->QueryInterface(IID_IPersistFile, reinterpret_cast<void **>(&pf));
+    if (!pf) { sl->Release(); return {}; }
+
+    const bool loaded = SUCCEEDED(pf->Load(lnkPath.toStdWString().c_str(), STGM_READ));
+    pf->Release();
+    if (!loaded) { sl->Release(); return {}; }
+
+    wchar_t iconPathW[MAX_PATH] = {};
+    int     iconIdx = 0;
+    sl->GetIconLocation(iconPathW, MAX_PATH, &iconIdx);
+    sl->Release();
+
+    if (iconPathW[0] == L'\0') return {};
+
+    // Expand environment variables — SHGetFileInfoW does NOT do this for .lnk icon paths.
+    wchar_t expandedW[MAX_PATH] = {};
+    ExpandEnvironmentStringsW(iconPathW, expandedW, MAX_PATH);
+    const QString iconFile = QDir::fromNativeSeparators(QString::fromWCharArray(expandedW));
+
+    if (!QFileInfo::exists(iconFile)) return {};
+
+    // .ico files: read via QImageReader to handle all sizes, incl. PNG-compressed frames.
+    if (iconFile.endsWith(QLatin1String(".ico"), Qt::CaseInsensitive)) {
+        QImageReader reader(iconFile);
+        QImage best;
+        do {
+            const QImage img = reader.read();
+            if (img.isNull()) break;
+            if (img.width() * img.height() > best.width() * best.height())
+                best = img;
+        } while (reader.jumpToNextImage());
+
+        if (!best.isNull()) {
+            const QPixmap pm = QPixmap::fromImage(best);
+            QIcon icon;
+            for (int sz : { 16, 48, 128, 256 })
+                icon.addPixmap(pm.scaled(sz, sz, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            return icon;
+        }
+    }
+
+    // EXE / DLL: delegate to the standard shell extractor on the icon source file.
+    return extractIcons(iconFile);
 }

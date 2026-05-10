@@ -38,6 +38,7 @@ FrameForeign::FrameForeign(const FrameConfig & cfg, QObject * parent)
     _dirModel = new DirEntryModel(this);
     _context->setContextProperty("my_fileModel", _dirModel);
     _context->setContextProperty("frameId", _id);
+    _context->setContextProperty("frameDirPath", QString());
 
     _window.reset(qobject_cast<QWindow *>(frameComponent.create(_context)));
 
@@ -76,8 +77,6 @@ void FrameForeign::applyConfig(const FrameConfig & cfg)
 
     if (!cfg.dir.isEmpty())
         setDirectory(cfg.dir);
-    else if (!cfg.icons.isEmpty())
-        setDirectory(QFileInfo(cfg.icons.first().path).absolutePath());
     else if (_dirModel->currentDirPath().isEmpty())
         setDirectory(QDir::homePath());
 }
@@ -135,6 +134,8 @@ void FrameForeign::setDirectory(const QString & directory)
         return;
     if (_window)
         _window->setTitle(getNameForDirectory(directory));
+    if (_context)
+        _context->setContextProperty("frameDirPath", QDir::cleanPath(directory));
 }
 
 void FrameForeign::setColor(const QColor & color)

@@ -10,12 +10,6 @@ namespace Gates {
 
 // ── Data structures ──────────────────────────────────────────────────────────
 
-struct IconEntry {
-    QString path;
-    int     row = 0;
-    int     col = 0;
-};
-
 struct FrameStyle {
     QString blur    = QStringLiteral("auto"); // "auto"|"mica"|"acrylic"|"none"
     QString color   = QStringLiteral("#1a1a2e");
@@ -26,7 +20,7 @@ struct FrameStyle {
 struct FrameConfig {
     QString          id;
     QString          name;
-    QString          dir;     // explicit directory path; empty = derive from icons
+    QString          dir;     // directory path watched by this frame
     QString          monitor;
     int              x           = 100;
     int              y           = 100;
@@ -35,7 +29,6 @@ struct FrameConfig {
     bool             collapsed   = false;
     QString          dockedEdge  = QStringLiteral("none"); // "none"|"left"|"right"|"top"|"bottom"
     FrameStyle       style;
-    QList<IconEntry> icons;
 };
 
 struct DesktopIconEntry {

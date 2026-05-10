@@ -226,4 +226,91 @@ cleanup:
     CoTaskMemFree(pidlFull);
 }
 
+void ShellContextMenu::showBackground(QPoint screenPos, HWND parentHwnd)
+{
+    // ── 1. Get the desktop IShellFolder ──────────────────────────────────────
+    IShellFolder * desktop = nullptr;
+    if (FAILED(SHGetDesktopFolder(&desktop)) || !desktop) {
+        qWarning() << "[ShellContextMenu] SHGetDesktopFolder failed";
+        return;
+    }
+
+    // ── 2. Get the background IContextMenu via CreateViewObject ───────────────
+    IContextMenu * cm = nullptr;
+    desktop->CreateViewObject(parentHwnd, IID_IContextMenu,
+                              reinterpret_cast<void **>(&cm));
+    if (!cm) {
+        qWarning() << "[ShellContextMenu] CreateViewObject(IContextMenu) failed";
+        desktop->Release();
+        return;
+    }
+
+    // ── 3. Try to promote to IContextMenu3 or IContextMenu2 ──────────────────
+    MenuState state;
+    cm->QueryInterface(IID_IContextMenu3, reinterpret_cast<void **>(&state.cm3));
+    if (!state.cm3)
+        cm->QueryInterface(IID_IContextMenu2, reinterpret_cast<void **>(&state.cm2));
+
+    IContextMenu * activeCm = state.cm3
+                              ? static_cast<IContextMenu *>(state.cm3)
+                              : state.cm2
+                                ? static_cast<IContextMenu *>(state.cm2)
+                                : cm;
+
+    // ── 4. Build the popup menu ───────────────────────────────────────────────
+    HMENU hMenu = CreatePopupMenu();
+    const HRESULT qcmHr = activeCm->QueryContextMenu(
+        hMenu, 0,
+        /*idCmdFirst=*/1, /*idCmdLast=*/0x7FFF,
+        CMF_NORMAL | CMF_EXPLORE);
+
+    if (FAILED(qcmHr)) {
+        qWarning() << "[ShellContextMenu] showBackground: QueryContextMenu failed"
+                   << Qt::hex << (uint)qcmHr;
+        DestroyMenu(hMenu);
+        goto bgcleanup;
+    }
+
+    // ── 5. Install subclass, show menu, invoke command ────────────────────────
+    if (parentHwnd && (state.cm2 || state.cm3))
+        SetWindowSubclass(parentHwnd, menuSubclassProc, kSubclassId,
+                          reinterpret_cast<DWORD_PTR>(&state));
+
+    {
+        SetForegroundWindow(parentHwnd);
+        const int cmd = TrackPopupMenu(
+            hMenu,
+            TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+            screenPos.x(), screenPos.y(),
+            0, parentHwnd, nullptr);
+
+        if (parentHwnd && (state.cm2 || state.cm3))
+            RemoveWindowSubclass(parentHwnd, menuSubclassProc, kSubclassId);
+
+        if (cmd > 0) {
+            CMINVOKECOMMANDINFOEX info = {};
+            info.cbSize  = sizeof(info);
+            info.fMask   = CMIC_MASK_UNICODE | CMIC_MASK_ASYNCOK;
+            info.hwnd    = parentHwnd;
+            info.lpVerb  = MAKEINTRESOURCEA(cmd - 1);
+            info.lpVerbW = MAKEINTRESOURCEW(cmd - 1);
+            info.nShow   = SW_SHOWNORMAL;
+
+            const HRESULT hr = activeCm->InvokeCommand(
+                reinterpret_cast<CMINVOKECOMMANDINFO *>(&info));
+            if (FAILED(hr))
+                qWarning() << "[ShellContextMenu] showBackground: InvokeCommand failed"
+                           << Qt::hex << (uint)hr;
+        }
+    }
+
+    DestroyMenu(hMenu);
+
+bgcleanup:
+    if (state.cm3) state.cm3->Release();
+    if (state.cm2) state.cm2->Release();
+    cm->Release();
+    desktop->Release();
+}
+
 } // namespace Gates

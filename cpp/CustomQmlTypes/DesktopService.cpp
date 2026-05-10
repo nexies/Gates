@@ -63,6 +63,25 @@ void DesktopService::showContextMenu(const QString & path, int screenX, int scre
 #endif
 }
 
+void DesktopService::showDesktopContextMenu(int screenX, int screenY)
+{
+#ifdef Q_OS_WIN
+    HWND parentHwnd = nullptr;
+    if (auto * win = QGuiApplication::focusWindow())
+        parentHwnd = reinterpret_cast<HWND>(win->winId());
+    if (!parentHwnd) {
+        for (auto * win : QGuiApplication::allWindows()) {
+            if (win->isVisible()) {
+                parentHwnd = reinterpret_cast<HWND>(win->winId());
+                break;
+            }
+        }
+    }
+
+    Gates::ShellContextMenu::instance().showBackground({screenX, screenY}, parentHwnd);
+#endif
+}
+
 bool DesktopService::renameFile(const QString & oldPath, const QString & newName)
 {
     const QString trimmed = newName.trimmed();

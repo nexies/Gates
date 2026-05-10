@@ -15,10 +15,18 @@ Window {
     property bool _blockDeselect: false
 
     TapHandler {
+        acceptedButtons: Qt.LeftButton
         onTapped: {
             if (root._blockDeselect) { root._blockDeselect = false; return }
             selectionService.deselect()
         }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: (eventPoint) => desktopService.showDesktopContextMenu(
+            Math.round(eventPoint.globalPosition.x),
+            Math.round(eventPoint.globalPosition.y))
     }
 
     // ── Grid layout constants ────────────────────────────────────────────────
