@@ -117,72 +117,15 @@ static QPixmap iconToPixmap(HICON hIcon, int size)
 // Converts an HBITMAP returned by IShellItemImageFactory::GetImage to QPixmap.
 // The bitmap is a 32-bpp top-down DIB with pre-multiplied ARGB.
 
+// QImage::fromHBITMAP (Qt 6, Windows) handles all three edge cases we care about:
+//  • Reads DIBSECTION bits directly → alpha channel preserved (GetDIBits with BI_RGB zeroes it)
+//  • Correctly flips bottom-up bitmaps → no upside-down thumbnails
+//  • Returns Format_ARGB32_Premultiplied, matching what IShellItemImageFactory produces
 static QPixmap bitmapToPixmap(HBITMAP hbmp)
 {
     if (!hbmp) return {};
-
-    // IShellItemImageFactory returns a DIBSECTION — access bits directly so the
-    // alpha channel is preserved.  GetDIBits with BI_RGB zeroes the high byte on
-    // many drivers, which loses transparency and produces a white background.
-    DIBSECTION ds{};
-    if (GetObject(hbmp, sizeof(ds), &ds) == sizeof(DIBSECTION)
-            && ds.dsBm.bmBits
-            && ds.dsBmih.biBitCount == 32)
-    {
-        const int w      = ds.dsBm.bmWidth;
-        const int h      = std::abs(ds.dsBmih.biHeight);
-        const int stride = w * 4;
-
-        const auto * bytes = reinterpret_cast<const BYTE *>(ds.dsBm.bmBits);
-        const int totalPx  = w * h;
-
-        bool hasAlpha = false;
-        for (int i = 0; i < totalPx && !hasAlpha; ++i)
-            hasAlpha = bytes[i * 4 + 3] != 0;
-
-        const QImage::Format fmt = hasAlpha ? QImage::Format_ARGB32_Premultiplied
-                                            : QImage::Format_RGB32;
-
-        // biHeight > 0 → bottom-up storage; < 0 → top-down (usual for shell bitmaps)
-        if (ds.dsBmih.biHeight > 0) {
-            // Flip rows into a fresh image
-            QImage img(w, h, fmt);
-            for (int y = 0; y < h; ++y)
-                memcpy(img.scanLine(h - 1 - y), bytes + y * stride, stride);
-            return QPixmap::fromImage(img);
-        }
-        return QPixmap::fromImage(
-            QImage(bytes, w, h, stride, fmt).copy());
-    }
-
-    // Fallback for non-DIBSECTION bitmaps: use GetDIBits.
-    // Note: this path may lose alpha on some drivers.
-    BITMAP bm{};
-    if (!GetObject(hbmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0)
-        return {};
-
-    const int w = bm.bmWidth, h = std::abs(bm.bmHeight), stride = w * 4;
-    BITMAPINFOHEADER bih{};
-    bih.biSize = sizeof(bih); bih.biWidth = w; bih.biHeight = -h;
-    bih.biPlanes = 1; bih.biBitCount = 32; bih.biCompression = BI_RGB;
-
-    QByteArray bits(stride * h, Qt::Uninitialized);
-    HDC dc = GetDC(nullptr);
-    const bool ok = GetDIBits(dc, hbmp, 0, h, bits.data(),
-                               reinterpret_cast<BITMAPINFO *>(&bih), DIB_RGB_COLORS) > 0;
-    ReleaseDC(nullptr, dc);
-    if (!ok) return {};
-
-    auto * bytes2 = reinterpret_cast<BYTE *>(bits.data());
-    bool hasAlpha = false;
-    for (int i = 0, n = w * h; i < n && !hasAlpha; ++i)
-        hasAlpha = bytes2[i * 4 + 3] != 0;
-    if (!hasAlpha)
-        for (int i = 0, n = w * h; i < n; ++i) bytes2[i * 4 + 3] = 0xFF;
-
-    const QImage::Format fmt = hasAlpha ? QImage::Format_ARGB32_Premultiplied
-                                        : QImage::Format_RGB32;
-    return QPixmap::fromImage(QImage(reinterpret_cast<const uchar *>(bits.constData()), w, h, stride, fmt).copy());
+    const QImage img = QImage::fromHBITMAP(hbmp);
+    return img.isNull() ? QPixmap{} : QPixmap::fromImage(img);
 }
 
 QPixmap extractFilePixmap(const QString & path, int size)
@@ -219,7 +162,7 @@ QPixmap extractFilePixmap(const QString & path, int size)
     QPixmap result = bitmapToPixmap(hbmp);
     DeleteObject(hbmp);
 
-    if (!result.isNull() && result.width() > size)
+    if (!result.isNull() && result.size() != QSize(size, size))
         result = result.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     return result;

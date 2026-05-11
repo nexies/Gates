@@ -38,41 +38,29 @@ IconProvider::~IconProvider()
 QPixmap IconProvider::requestPixmap(const QString & id, QSize * size,
                                     const QSize & requestedSize)
 {
-    const int targetSz = (requestedSize.isValid() && requestedSize != QSize(-1, -1))
-                         ? qMax(requestedSize.width(), requestedSize.height()) : 48;
-
-    QPixmap out;
+    const QSize targetSize = (requestedSize.isValid() && requestedSize != QSize(-1, -1))
+                             ? requestedSize : QSize(48, 48);
+    QIcon icon;
 
 #ifdef Q_OS_WIN
     if (id.startsWith(QLatin1String("::virtual::"))) {
-        const QString clsidPath = virtualItemPath(id.mid(11));
+        const QString displayName = id.mid(11);
+        const QString clsidPath   = virtualItemPath(displayName);
 
         if (!clsidPath.isEmpty())
-            out = extractFilePixmap(clsidPath, targetSz);
+            icon = extractIcons(clsidPath);
 
-        if (out.isNull()) {
-            // try the display name directly (SHCreateItemFromParsingName may resolve it)
-            out = extractFilePixmap(id.mid(11), targetSz);
-        }
-
-        if (out.isNull()) {
-            const QIcon fallback = QIcon::fromTheme(
-                QStringLiteral("system-file-manager"),
-                QIcon(QStringLiteral(":/icons/home.png")));
-            out = fallback.pixmap(targetSz, targetSz);
-        }
+        if (icon.isNull())
+            icon = QIcon::fromTheme(QStringLiteral("system-file-manager"),
+                                    QIcon(QStringLiteral(":/icons/home.png")));
     } else {
-        // Primary: IShellItemImageFactory — handles .lnk shortcuts, all file types
-        out = extractFilePixmap(id, targetSz);
-
-        // Fallback: legacy shell extraction (SHGetFileInfo + image lists)
-        if (out.isNull())
-            out = _iconProvider->icon(QFileInfo(id)).pixmap(targetSz, targetSz);
+        icon = _iconProvider->icon(QFileInfo(id));
     }
 #else
-    out = _iconProvider->icon(QFileInfo(id)).pixmap(targetSz, targetSz);
+    icon = _iconProvider->icon(QFileInfo(id));
 #endif
 
+    QPixmap out = icon.pixmap(targetSize);
     if (size) {
         size->setWidth(out.width());
         size->setHeight(out.height());
