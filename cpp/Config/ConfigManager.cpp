@@ -161,6 +161,16 @@ bool ConfigManager::load()
         _config.blurPreference = QString::fromStdString(
             root["global"]["blur_preference"].value_or(std::string{"auto"}));
 
+        if (const auto * lay = root["desktop"]["layout"].as_table()) {
+            _config.desktopLayout.cellW         = (int) lay->at("cell_w").value_or(90);
+            _config.desktopLayout.cellH         = (int) lay->at("cell_h").value_or(100);
+            _config.desktopLayout.gapX          = (int) lay->at("gap_x").value_or(6);
+            _config.desktopLayout.gapY          = (int) lay->at("gap_y").value_or(6);
+            _config.desktopLayout.margin        = (int) lay->at("margin").value_or(10);
+            _config.desktopLayout.showDebugGrid    =       lay->at("show_debug_grid").value_or(false);
+            _config.desktopLayout.snapFramesToGrid =       (*lay)["snap_frames_to_grid"].value_or(false);
+        }
+
         _config.desktopIcons.clear();
         if (const auto * arr = root["desktop"]["icons"].as_array()) {
             for (const auto & item : *arr)
@@ -203,6 +213,15 @@ bool ConfigManager::save()
             { "blur_preference", _config.blurPreference.toStdString()    }
         }},
         { "desktop", toml::table{
+            { "layout", toml::table{
+                { "cell_w",          _config.desktopLayout.cellW         },
+                { "cell_h",          _config.desktopLayout.cellH         },
+                { "gap_x",           _config.desktopLayout.gapX          },
+                { "gap_y",           _config.desktopLayout.gapY          },
+                { "margin",          _config.desktopLayout.margin        },
+                { "show_debug_grid",      _config.desktopLayout.showDebugGrid    },
+                { "snap_frames_to_grid", _config.desktopLayout.snapFramesToGrid },
+            }},
             { "icons", std::move(desktopIconsArr) }
         }},
         { "frames", std::move(framesArr) }
@@ -235,6 +254,11 @@ void ConfigManager::addFrame(const FrameConfig & frame)
     save();
     emit frameAdded(frame);
     emit configChanged();
+}
+
+void ConfigManager::notifyDesktopLayoutChanged()
+{
+    emit desktopLayoutChanged();
 }
 
 void ConfigManager::removeFrame(const QString & id)

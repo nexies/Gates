@@ -16,3 +16,8 @@ QIcon extractIcons(const QString & sourceFile);
 // uses environment variables (e.g. Steam shortcuts).
 // Returns a null QIcon if the shortcut has no resolvable icon location.
 QIcon extractShortcutIcon(const QString & lnkPath);
+
+// Primary icon extraction via IShellItemImageFactory — handles all file types,
+// shortcuts (follows them), and returns a pixmap at the requested size.
+// Returns a null QPixmap on failure.
+QPixmap extractFilePixmap(const QString & path, int size);

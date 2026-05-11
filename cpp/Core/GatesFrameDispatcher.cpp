@@ -90,6 +90,8 @@ void FrameDispatcher::spawnFrame(const FrameConfig & cfg)
             this,  &FrameDispatcher::onFrameGeometryChanged);
     connect(frame, &FrameForeign::collapsedChanged,
             this,  &FrameDispatcher::onFrameCollapsedChanged);
+    connect(frame, &FrameForeign::dockedEdgeChanged,
+            this,  &FrameDispatcher::onFrameDockedEdgeChanged);
 
     _frames.insert(cfg.id, frame);
     frame->show();
@@ -148,6 +150,14 @@ void FrameDispatcher::onFrameCollapsedChanged(QString id, bool collapsed)
     auto * cfg = ConfigManager::instance().frameById(id);
     if (!cfg || cfg->collapsed == collapsed) return;
     cfg->collapsed = collapsed;
+    _saveDebounce->start();
+}
+
+void FrameDispatcher::onFrameDockedEdgeChanged(QString id, QString edge)
+{
+    auto * cfg = ConfigManager::instance().frameById(id);
+    if (!cfg || cfg->dockedEdge == edge) return;
+    cfg->dockedEdge = edge;
     _saveDebounce->start();
 }
 

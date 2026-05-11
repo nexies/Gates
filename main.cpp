@@ -6,6 +6,8 @@
 
 #include "cpp/Config/ConfigManager.h"
 #include "cpp/Core/GatesFrameDispatcher.h"
+#include "cpp/Core/TrayIcon.h"
+#include "cpp/Settings/SettingsController.h"
 #include "cpp/Shell/DesktopShellManager.h"
 #include "cpp/Shell/DesktopLayer.h"
 
@@ -97,6 +99,10 @@ int main(int argc, char * argv[])
     // ── Frame dispatcher ──────────────────────────────────────────────────────
     Gates::FrameDispatcher dispatcher;
     dispatcher.init();
+
+    // ── Settings + tray icon ──────────────────────────────────────────────────
+    Gates::SettingsController settingsController;
+    Gates::TrayIcon           trayIcon(&settingsController);
 
     return app.exec();
 }

@@ -10,6 +10,7 @@ Item {
     property alias text: nameLabel.text
     property bool frameMinimised:  false
     property int  nameBarPosition: GatesFrameState.NameBarOnTop
+    property bool docked:          false
 
     id: viewport
 
@@ -37,21 +38,15 @@ Item {
     }
 
 
-    NameBarCustomButton
-    {
-        id: optionsButton
-        iconImage: "qrc:/icons/more_horiz.png"
-        width: 30
-        height: 30
-
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: (parent.height - height) / 2
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: optionsButtonTriggered()
     }
 
     NameBarCustomButton
     {
         id: minimizeButton
+        visible: !viewport.docked
         iconImage: "qrc:/icons/chevron_left.png"
         width: 30
         height: 30

@@ -9,8 +9,8 @@ GridView {
     visible: true
     focus:   true
 
-    anchors.leftMargin:  20
-    anchors.rightMargin: 20
+    anchors.leftMargin:  desktopConfig.snapFramesToGrid ? desktopConfig.gapX : 20
+    anchors.rightMargin: desktopConfig.snapFramesToGrid ? desktopConfig.gapX : 20
     clip:                true
     snapMode:            GridView.SnapToRow
     boundsBehavior:      GridView.StopAtBounds
@@ -19,8 +19,8 @@ GridView {
     highlightMoveDuration:       0
     highlightFollowsCurrentItem: true
 
-    cellHeight: 100
-    cellWidth:  100
+    cellWidth:  desktopConfig.snapFramesToGrid ? desktopConfig.stepX : 100
+    cellHeight: desktopConfig.snapFramesToGrid ? desktopConfig.stepY : 100
 
     onCurrentIndexChanged: currentItemRenaming = false
 

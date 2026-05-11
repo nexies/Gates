@@ -34,9 +34,11 @@ signals:
     void geometryChanged(QString id, int x, int y, int w, int h);
     void visibilityChanged(QString id, bool visible);
     void collapsedChanged(QString id, bool collapsed);
+    void dockedEdgeChanged(QString id, QString edge); // "none"|"top"|"bottom"
 
 private slots:
     void onWindowMinimisedChanged();
+    void onWindowDockedStateChanged();
 
 protected:
     QString getNameForDirectory(const QString & path);

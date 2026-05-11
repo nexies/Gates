@@ -42,11 +42,13 @@ struct DesktopIconEntry {
 //       the user can adjust cell size, gaps and margins per monitor.
 //       Serialised under [desktop.layout] in config.toml.
 struct DesktopLayoutConfig {
-    int cellW  = 90;   // icon delegate width  (px)
-    int cellH  = 100;  // icon delegate height (px)
-    int gapX   = 6;    // horizontal gap between cells (px)
-    int gapY   = 6;    // vertical   gap between cells (px)
-    int margin = 10;   // padding from all screen edges (px)
+    int  cellW            = 90;    // icon delegate width  (px)
+    int  cellH            = 100;   // icon delegate height (px)
+    int  gapX             = 6;     // horizontal gap between cells (px)
+    int  gapY             = 6;     // vertical   gap between cells (px)
+    int  margin           = 10;    // padding from all screen edges (px)
+    bool showDebugGrid    = false;
+    bool snapFramesToGrid = false;  // frame pos + icon step match desktop grid
 
     // Derived helpers — keep QML stepX/stepY in sync when changing these.
     int stepX() const { return cellW + gapX; }
@@ -87,10 +89,15 @@ public:
     void addDesktopIcon(const DesktopIconEntry & entry);
     void removeDesktopIcon(const QString & path);
 
+    // Emit desktopLayoutChanged without going through the file-watcher path.
+    // Call this after directly mutating desktopLayout + save().
+    void notifyDesktopLayoutChanged();
+
     static QString newFrameId();
 
 signals:
     void configChanged();
+    void desktopLayoutChanged();  // fired when DesktopLayoutConfig fields change
     void frameAdded(Gates::FrameConfig frame);
     void frameRemoved(QString id);
 

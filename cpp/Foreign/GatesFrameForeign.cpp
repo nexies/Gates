@@ -71,8 +71,17 @@ void FrameForeign::applyConfig(const FrameConfig & cfg)
     _window->setProperty("frameOpacity", cfg.style.opacity);
     _window->setVisible(true);
 
-    // Restore collapsed state without animation (instant collapse on launch)
-    if (cfg.collapsed)
+    // Restore docked + collapsed state (docked frames are always collapsed)
+    // dockedState must be set before minimiseInstant() so Y is positioned correctly.
+    const bool isDocked = !cfg.dockedEdge.isEmpty() && cfg.dockedEdge != QLatin1String("none");
+    if (isDocked) {
+        // GatesFrameState: DockedOnTop=1 (nameBar on bottom=1), DockedOnBottom=2 (nameBar on top=0)
+        const int dockedState = (cfg.dockedEdge == QLatin1String("top")) ? 1 : 2;
+        const int nameBarPos  = (cfg.dockedEdge == QLatin1String("top")) ? 1 : 0;
+        _window->setProperty("dockedState",     dockedState);
+        _window->setProperty("nameBarPosition", nameBarPos);
+    }
+    if (isDocked || cfg.collapsed)
         QMetaObject::invokeMethod(_window.get(), "minimiseInstant");
 
     if (!cfg.dir.isEmpty())
@@ -111,12 +120,32 @@ void FrameForeign::connectWindowSignals()
     } else {
         qWarning() << "[FrameForeign] could not connect to minimised property for" << _id;
     }
+
+    // Track dockedState changes so we can persist the docked edge to config
+    QQmlProperty dockedProp(_window.get(), QStringLiteral("dockedState"));
+    if (dockedProp.isValid()) {
+        const int slotIdx = metaObject()->indexOfSlot("onWindowDockedStateChanged()");
+        dockedProp.connectNotifySignal(this, slotIdx);
+    } else {
+        qWarning() << "[FrameForeign] could not connect to dockedState property for" << _id;
+    }
 }
 
 void FrameForeign::onWindowMinimisedChanged()
 {
     if (!_window) return;
     emit collapsedChanged(_id, _window->property("minimised").toBool());
+}
+
+void FrameForeign::onWindowDockedStateChanged()
+{
+    if (!_window) return;
+    // GatesFrameState: NotDocked=0, DockedOnTop=1, DockedOnBottom=2
+    switch (_window->property("dockedState").toInt()) {
+    case 1:  emit dockedEdgeChanged(_id, QStringLiteral("top"));    break;
+    case 2:  emit dockedEdgeChanged(_id, QStringLiteral("bottom")); break;
+    default: emit dockedEdgeChanged(_id, QStringLiteral("none"));   break;
+    }
 }
 
 void FrameForeign::show()    { setVisible(true);  }

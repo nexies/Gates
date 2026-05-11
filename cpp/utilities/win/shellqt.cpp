@@ -27,7 +27,6 @@
 #include <QDir>
 #include <QDebug>
 #include <QFileInfo>
-#include <QImageReader>
 #include <QPixmap>
 #include <QImage>
 #include <QScopeGuard>
@@ -109,6 +108,119 @@ static QPixmap iconToPixmap(HICON hIcon, int size)
     DeleteObject(hBmp);
     DeleteDC(memDC);
     ReleaseDC(nullptr, screenDC);
+
+    return result;
+}
+
+// ── IShellItemImageFactory (primary path) ────────────────────────────────────
+//
+// Converts an HBITMAP returned by IShellItemImageFactory::GetImage to QPixmap.
+// The bitmap is a 32-bpp top-down DIB with pre-multiplied ARGB.
+
+static QPixmap bitmapToPixmap(HBITMAP hbmp)
+{
+    if (!hbmp) return {};
+
+    // IShellItemImageFactory returns a DIBSECTION — access bits directly so the
+    // alpha channel is preserved.  GetDIBits with BI_RGB zeroes the high byte on
+    // many drivers, which loses transparency and produces a white background.
+    DIBSECTION ds{};
+    if (GetObject(hbmp, sizeof(ds), &ds) == sizeof(DIBSECTION)
+            && ds.dsBm.bmBits
+            && ds.dsBmih.biBitCount == 32)
+    {
+        const int w      = ds.dsBm.bmWidth;
+        const int h      = std::abs(ds.dsBmih.biHeight);
+        const int stride = w * 4;
+
+        const auto * bytes = reinterpret_cast<const BYTE *>(ds.dsBm.bmBits);
+        const int totalPx  = w * h;
+
+        bool hasAlpha = false;
+        for (int i = 0; i < totalPx && !hasAlpha; ++i)
+            hasAlpha = bytes[i * 4 + 3] != 0;
+
+        const QImage::Format fmt = hasAlpha ? QImage::Format_ARGB32_Premultiplied
+                                            : QImage::Format_RGB32;
+
+        // biHeight > 0 → bottom-up storage; < 0 → top-down (usual for shell bitmaps)
+        if (ds.dsBmih.biHeight > 0) {
+            // Flip rows into a fresh image
+            QImage img(w, h, fmt);
+            for (int y = 0; y < h; ++y)
+                memcpy(img.scanLine(h - 1 - y), bytes + y * stride, stride);
+            return QPixmap::fromImage(img);
+        }
+        return QPixmap::fromImage(
+            QImage(bytes, w, h, stride, fmt).copy());
+    }
+
+    // Fallback for non-DIBSECTION bitmaps: use GetDIBits.
+    // Note: this path may lose alpha on some drivers.
+    BITMAP bm{};
+    if (!GetObject(hbmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0)
+        return {};
+
+    const int w = bm.bmWidth, h = std::abs(bm.bmHeight), stride = w * 4;
+    BITMAPINFOHEADER bih{};
+    bih.biSize = sizeof(bih); bih.biWidth = w; bih.biHeight = -h;
+    bih.biPlanes = 1; bih.biBitCount = 32; bih.biCompression = BI_RGB;
+
+    QByteArray bits(stride * h, Qt::Uninitialized);
+    HDC dc = GetDC(nullptr);
+    const bool ok = GetDIBits(dc, hbmp, 0, h, bits.data(),
+                               reinterpret_cast<BITMAPINFO *>(&bih), DIB_RGB_COLORS) > 0;
+    ReleaseDC(nullptr, dc);
+    if (!ok) return {};
+
+    auto * bytes2 = reinterpret_cast<BYTE *>(bits.data());
+    bool hasAlpha = false;
+    for (int i = 0, n = w * h; i < n && !hasAlpha; ++i)
+        hasAlpha = bytes2[i * 4 + 3] != 0;
+    if (!hasAlpha)
+        for (int i = 0, n = w * h; i < n; ++i) bytes2[i * 4 + 3] = 0xFF;
+
+    const QImage::Format fmt = hasAlpha ? QImage::Format_ARGB32_Premultiplied
+                                        : QImage::Format_RGB32;
+    return QPixmap::fromImage(QImage(reinterpret_cast<const uchar *>(bits.constData()), w, h, stride, fmt).copy());
+}
+
+QPixmap extractFilePixmap(const QString & path, int size)
+{
+    const HRESULT comHr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    auto comGuard = qScopeGuard([comHr] { if (comHr == S_OK) CoUninitialize(); });
+
+    const std::wstring wpath =
+        QDir::toNativeSeparators(path).toStdWString();
+
+    IShellItem * item = nullptr;
+    if (FAILED(SHCreateItemFromParsingName(wpath.c_str(), nullptr,
+                                           IID_IShellItem,
+                                           reinterpret_cast<void **>(&item))))
+        return {};
+    auto itemGuard = qScopeGuard([item] { item->Release(); });
+
+    IShellItemImageFactory * factory = nullptr;
+    if (FAILED(item->QueryInterface(IID_IShellItemImageFactory,
+                                    reinterpret_cast<void **>(&factory))))
+        return {};
+    auto factoryGuard = qScopeGuard([factory] { factory->Release(); });
+
+    // Always fetch at 256 so we start from the highest-quality source frame.
+    // Qt's SmoothTransformation scales down much better than the shell does.
+    const int fetchSize = qMax(size, 256);
+    HBITMAP hbmp = nullptr;
+    const SIZE sz{ fetchSize, fetchSize };
+    // SIIGBF_RESIZETOFIT: shell returns thumbnail if available, icon otherwise.
+    // Correctly follows .lnk shortcuts and reads the assigned game icon for Steam.
+    if (FAILED(factory->GetImage(sz, SIIGBF_RESIZETOFIT, &hbmp)) || !hbmp)
+        return {};
+
+    QPixmap result = bitmapToPixmap(hbmp);
+    DeleteObject(hbmp);
+
+    if (!result.isNull() && result.width() > size)
+        result = result.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     return result;
 }
@@ -227,33 +339,35 @@ QIcon extractShortcutIcon(const QString & lnkPath)
 
     if (iconPathW[0] == L'\0') return {};
 
-    // Expand environment variables — SHGetFileInfoW does NOT do this for .lnk icon paths.
+    // Expand environment variables — Steam shortcuts commonly use %ProgramFiles(x86)% etc.
     wchar_t expandedW[MAX_PATH] = {};
     ExpandEnvironmentStringsW(iconPathW, expandedW, MAX_PATH);
-    const QString iconFile = QDir::fromNativeSeparators(QString::fromWCharArray(expandedW));
 
-    if (!QFileInfo::exists(iconFile)) return {};
+    // SHDefExtractIconW is the authoritative Windows API for icon extraction:
+    // handles .ico, .exe, .dll, PNG-compressed frames, iconIdx, and masked icons correctly.
+    // Using QImageReader for .ico bypassed the AND mask, producing white pixels on
+    // icons that use traditional (non-PNG) bitmask encoding.
+    HICON hLarge = nullptr, hSmall = nullptr;
+    const HRESULT hr = SHDefExtractIconW(expandedW, iconIdx, 0,
+                                         &hLarge, &hSmall,
+                                         MAKELONG(256, 48));
+    if (FAILED(hr)) return {};
 
-    // .ico files: read via QImageReader to handle all sizes, incl. PNG-compressed frames.
-    if (iconFile.endsWith(QLatin1String(".ico"), Qt::CaseInsensitive)) {
-        QImageReader reader(iconFile);
-        QImage best;
-        do {
-            const QImage img = reader.read();
-            if (img.isNull()) break;
-            if (img.width() * img.height() > best.width() * best.height())
-                best = img;
-        } while (reader.jumpToNextImage());
-
-        if (!best.isNull()) {
-            const QPixmap pm = QPixmap::fromImage(best);
-            QIcon icon;
-            for (int sz : { 16, 48, 128, 256 })
-                icon.addPixmap(pm.scaled(sz, sz, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-            return icon;
+    QIcon result;
+    if (hLarge) {
+        const QPixmap pm = iconToPixmap(hLarge, 256);
+        DestroyIcon(hLarge);
+        if (!pm.isNull()) {
+            result.addPixmap(pm);
+            for (int sz : { 128, 48, 32, 16 })
+                result.addPixmap(pm.scaled(sz, sz, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
-
-    // EXE / DLL: delegate to the standard shell extractor on the icon source file.
-    return extractIcons(iconFile);
+    if (hSmall) {
+        const QPixmap pm = iconToPixmap(hSmall, 48);
+        DestroyIcon(hSmall);
+        if (!pm.isNull() && result.isNull())
+            result.addPixmap(pm);
+    }
+    return result;
 }

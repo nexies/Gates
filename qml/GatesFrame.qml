@@ -13,13 +13,20 @@ ResizableFramelessWindow {
     width:         600
     height:        500
     minimumHeight: namebar.height + 100
-    minimumWidth:  140  // one icon column (100) + grid side margins (20+20)
 
     blurBehind: true
 
     resizeSnapToGrid: true
-    sizeIncrement: Qt.size(100, 0)  // snap width to icon-column steps; 0 = free height
-    baseSize:      Qt.size(140, 0)  // one column + left/right grid margins
+    sizeIncrement: desktopConfig.snapFramesToGrid
+                       ? Qt.size(desktopConfig.stepX, 0)
+                       : Qt.size(100, 0)
+    baseSize: desktopConfig.snapFramesToGrid
+                  ? Qt.size(desktopConfig.stepX + desktopConfig.gapX, 0)
+                  : Qt.size(140, 0)
+
+    minimumWidth: desktopConfig.snapFramesToGrid
+                      ? desktopConfig.stepX + desktopConfig.gapX
+                      : 140
 
     // ── State ─────────────────────────────────────────────────────────────────
     property int  nameBarPosition: GatesFrameState.NameBarOnTop
@@ -33,6 +40,8 @@ ResizableFramelessWindow {
     // backgroundSettings.opacity would make nameBarBackground fully opaque at
     // typical config values (0.72 + 0.3 > 1.0).
     property double frameOpacity: 0.1
+
+    property int animationDuration: 300
 
     QtObject {
         id: backgroundSettings
@@ -58,12 +67,12 @@ ResizableFramelessWindow {
         ParallelAnimation {
             NumberAnimation {
                 target: frameWindow; property: "height"
-                duration: 200; easing.type: Easing.InOutQuad; to: namebar.height
+                duration: frameWindow.animationDuration; easing.type: Easing.InOutQuad; to: namebar.height
             }
             NumberAnimation {
                 id: collapseYAnim
                 target: frameWindow; property: "y"
-                duration: 200; easing.type: Easing.InOutQuad; to: 0
+                duration: frameWindow.animationDuration; easing.type: Easing.InOutQuad; to: 0
             }
         }
     }
@@ -80,12 +89,12 @@ ResizableFramelessWindow {
         ParallelAnimation {
             NumberAnimation {
                 target: frameWindow; property: "height"
-                duration: 200; easing.type: Easing.InOutQuad; to: maximisedHeight
+                duration: frameWindow.animationDuration; easing.type: Easing.InOutQuad; to: maximisedHeight
             }
             NumberAnimation {
                 id: expandYAnim
                 target: frameWindow; property: "y"
-                duration: 200; easing.type: Easing.InOutQuad; to: 0
+                duration: frameWindow.animationDuration; easing.type: Easing.InOutQuad; to: 0
             }
         }
         PropertyAction { target: frameWindow; property: "minimumHeight"; value: namebar.height + 100 }
@@ -94,11 +103,15 @@ ResizableFramelessWindow {
     function minimise() {
         maximisedHeight = height
         minimised = true
+        if(maximiseAnimation.running)
+            maximiseAnimation.stop()
         minimiseAnimation.start()
     }
 
     function maximise() {
         minimised = false
+        if(minimiseAnimation.running)
+            minimiseAnimation.stop()
         maximiseAnimation.start()
     }
 
@@ -114,6 +127,18 @@ ResizableFramelessWindow {
 
     // ── Dock-to-edge detection (runs after each window drag) ──────────────────
     readonly property int _dockThreshold: 20
+
+    function snapToDesktopGrid() {
+        if (!desktopConfig.snapFramesToGrid) return
+        const sx  = desktopConfig.stepX
+        const sy  = desktopConfig.stepY
+        const m   = desktopConfig.margin
+        const gx  = desktopConfig.gapX
+        const col = Math.round((frameWindow.x + gx - m) / sx)
+        const row = Math.round((frameWindow.y + namebar.height - m) / sy)
+        frameWindow.x = m + col * sx - gx
+        frameWindow.y = m + row * sy - namebar.height
+    }
 
     function checkAndDock() {
         const sTop    = Screen.virtualY
@@ -246,6 +271,7 @@ ResizableFramelessWindow {
         text:            frameWindow.title
         frameMinimised:  frameWindow.minimised
         nameBarPosition: frameWindow.nameBarPosition
+        docked:          frameWindow.dockedState !== GatesFrameState.NotDocked
 
         onMinimiseButtonTriggered: {
             if (minimised) maximise()
@@ -287,6 +313,8 @@ ResizableFramelessWindow {
                     startSystemMove()
                 } else {
                     checkAndDock()
+                    if (dockedState === GatesFrameState.NotDocked)
+                        snapToDesktopGrid()
                 }
             }
         }

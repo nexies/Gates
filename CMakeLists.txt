@@ -30,6 +30,14 @@ add_executable(Gates main.cpp
         cpp/Core/GatesFrameDispatcher.cpp
         cpp/Core/GatesFrameDispatcher.h
 
+        cpp/Core/TrayIcon.cpp
+        cpp/Core/TrayIcon.h
+
+        cpp/Settings/SettingsBackend.cpp
+        cpp/Settings/SettingsBackend.h
+        cpp/Settings/SettingsController.cpp
+        cpp/Settings/SettingsController.h
+
         cpp/Shell/DesktopShellManager.cpp
         cpp/Shell/DesktopShellManager.h
 
@@ -44,6 +52,9 @@ add_executable(Gates main.cpp
 
         cpp/Shell/DesktopFolderLocator.cpp
         cpp/Shell/DesktopFolderLocator.h
+
+        cpp/Shell/DesktopConfigBridge.cpp
+        cpp/Shell/DesktopConfigBridge.h
 
         cpp/Shell/ShellContextMenu.cpp
         cpp/Shell/ShellContextMenu.h
@@ -138,6 +149,11 @@ qt_add_qml_module(Gates
         qml/testFrame.qml
         qml/VirtualDesktop.qml
         qml/DragGhost.qml
+        qml/SettingsWindow.qml
+        qml/SettingsPageFrames.qml
+        qml/SettingsPageDesktop.qml
+        qml/SettingsPageAbout.qml
+        qml/SettingsSpinBox.qml
     SOURCES
         cpp/CustomQmlTypes/RoundedRect.cpp
         cpp/CustomQmlTypes/RoundedRect.h

@@ -29,21 +29,26 @@ Window {
             Math.round(eventPoint.globalPosition.y))
     }
 
-    // ── Grid layout constants ────────────────────────────────────────────────
-    // These mirror AppConfig::desktopLayout (Gates::DesktopLayoutConfig in ConfigManager.h).
-    // TODO: replace with a live C++ context property (desktopLayoutConfig) once the
-    //       settings UI is implemented, so changes take effect without rebuilding.
-    readonly property int cellW:  90   // delegate width  — DesktopLayoutConfig::cellW
-    readonly property int cellH:  100  // delegate height — DesktopLayoutConfig::cellH
-    readonly property int gapX:   6    // h-gap           — DesktopLayoutConfig::gapX
-    readonly property int gapY:   6    // v-gap           — DesktopLayoutConfig::gapY
-    readonly property int margin:  10  // edge padding    — DesktopLayoutConfig::margin
-    readonly property int stepX:  cellW + gapX
-    readonly property int stepY:  cellH + gapY
+    // ── Grid layout — live-bound to desktopConfig context property ──────────
+    readonly property int cellW:  desktopConfig.cellW
+    readonly property int cellH:  desktopConfig.cellH
+    readonly property int gapX:   desktopConfig.gapX
+    readonly property int gapY:   desktopConfig.gapY
+    readonly property int margin: desktopConfig.margin
+    readonly property int stepX:  desktopConfig.stepX
+    readonly property int stepY:  desktopConfig.stepY
 
     // ── Debug: grid overlay ──────────────────────────────────────────────────
     Canvas {
+        id: debugGrid
         anchors.fill: parent
+        visible: desktopConfig.showDebugGrid
+
+        Connections {
+            target: desktopConfig
+            function onLayoutChanged() { debugGrid.requestPaint() }
+        }
+
         onPaint: {
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)

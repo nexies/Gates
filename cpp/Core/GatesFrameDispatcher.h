@@ -34,6 +34,7 @@ private slots:
     void onFrameRemoved(QString id);
     void onFrameGeometryChanged(QString id, int x, int y, int w, int h);
     void onFrameCollapsedChanged(QString id, bool collapsed);
+    void onFrameDockedEdgeChanged(QString id, QString edge);
     void onDropOnFrame(QString path, QString sourceFrameId, QString targetFrameId);
     void onDropOnDesktop(QString path, QString sourceFrameId, qreal x, qreal y);
 

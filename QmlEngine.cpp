@@ -8,6 +8,7 @@
 #include "cpp/CustomQmlTypes/DesktopService.h"
 #include "cpp/CustomQmlTypes/DragDropService.h"
 #include "cpp/CustomQmlTypes/SelectionService.h"
+#include "cpp/Shell/DesktopConfigBridge.h"
 
 namespace {
 
@@ -17,6 +18,7 @@ void setRootContextProperties(QQmlApplicationEngine * app)
     app->rootContext()->setContextProperty("desktopService",    new DesktopService(app));
     app->rootContext()->setContextProperty("dragDropService",   &DragDropService::instance());
     app->rootContext()->setContextProperty("selectionService",  &SelectionService::instance());
+    app->rootContext()->setContextProperty("desktopConfig",     &Gates::DesktopConfigBridge::instance());
 }
 
 void addFonts()
